@@ -1,5 +1,6 @@
 package misc
 
-class ImageInfo {
+import java.awt.image.BufferedImage
 
+class ImageInfo(val name: String, val image: BufferedImage, val layer: Int) {
 }

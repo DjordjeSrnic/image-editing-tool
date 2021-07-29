@@ -1,6 +1,6 @@
 package gui
 
-import misc.ImageInfo
+import misc.ProjectInfo
 
 import java.awt._
 import java.awt.event._
@@ -10,7 +10,7 @@ class ImportProjectDialog(owner: JFrame) extends JDialog(owner, true) {
 
   private val fc: JFileChooser = new JFileChooser()
   private var project_name: String = ""
-  var image_info: ImageInfo = null
+  var image_info: ProjectInfo = null
 
   private def init() = {
     setTitle("Import Project")

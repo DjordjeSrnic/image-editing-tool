@@ -1,13 +1,13 @@
 package gui
 
-import misc.ImageInfo
+import misc.ProjectInfo
 
 import java.awt._
 import java.awt.event._
 import javax.swing._
 import java.io._
 
-class SaveProjectDialog(owner: JFrame, image_info: ImageInfo) extends JDialog(owner, true) {
+class SaveProjectDialog(owner: JFrame, image_info: ProjectInfo) extends JDialog(owner, true) {
 
   private val fc: JFileChooser = new JFileChooser()
   val p: JDialog = this
