@@ -23,7 +23,8 @@ class TestPane(var image_list: ListBuffer[ImageInfo]) extends JPanel {
   var orig_y = -1
   var dest_x = -1
   var dest_y = -1
-
+  var changed = false
+  var cnt = 0
 
 
   private def getOverlapingRectangles(rectangles: ListBuffer[RectangleInfo]): ListBuffer[ListBuffer[RectangleInfo]] = {
@@ -150,16 +151,49 @@ class TestPane(var image_list: ListBuffer[ImageInfo]) extends JPanel {
   override def paintComponent(g: Graphics): Unit = {
     super.paintComponent(g)
 
-    image_list.foreach(i => {
-      g.drawImage(i.image, 0, 0, null)
-    })
+    var cnt_local = 0
+    if (changed == true) {
+      image_list.foreach(i => {
+        if (i.active) {
+          val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+          rectangle_list.foreach(ri => {
+            val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
+            if (temp_rect.intersects(r)) {
+              val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
+
+              val y = if (r.getY <= temp_rect.getY) temp_rect.y else r.y
+
+
+              val width = if (r.getX <= temp_rect.getX) r.getX + r.getWidth - temp_rect.getX
+                          else if (r.getX + r.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - r.getX
+                          else r.getWidth
+
+              val height = if (r.getY <= temp_rect.getY) r.getY + r.getHeight - temp_rect.getY
+                            else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
+                            else r.getHeight
+
+              val rgb = i.image.getRGB(x, y, width.toInt, height.toInt, null, 0, width.toInt)
+              val rgb_new = ListBuffer[Int]()
+              rgb.foreach(c => {
+                rgb_new += ri.color
+              })
+              if (ri.color != 0)
+                i.image.setRGB(x, y, width.toInt, height.toInt, rgb_new.toArray, 0, width.toInt)
+            }
+          })
+          g.drawImage(i.image, 0, 0, null)
+        }
+      })
+      changed = false
+    }
 
     val rect_groups: ListBuffer[ListBuffer[RectangleInfo]] = getOverlapingRectangles(rectangle_list)
 
-    rect_groups.foreach(rg => {
-      val polygon: Polygon = makePolygon(rg)
-      g.drawPolygon(polygon)
-    })
+//    rect_groups.foreach(rg => {
+//      val polygon: Polygon = makePolygon(rg)
+//      g.setColor(Color.RED)
+//      g.fillPolygon(polygon)
+//    })
   }
 
   def update_list(new_list: ListBuffer[ImageInfo]) = {
@@ -233,6 +267,7 @@ object Test extends App {
           println(image_list.last.toString)
           listData += ("Layer " + (layer_number-1) + ": " + dialog.file_path.split("\\\\").last)
           image_listbox.setListData(listData.toArray)
+          test_pane.changed = true
           test_pane.repaint()
           image_listbox.repaint()
         } catch {
@@ -273,6 +308,7 @@ object Test extends App {
 
     val options_menu = new JMenu("Options")
     val new_layer = new JMenuItem("New Layer")
+    val color_selection = new JMenuItem("Color Selection")
     new_layer.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
@@ -283,13 +319,28 @@ object Test extends App {
           listData += ("Layer " + (layer_number-1) + ": " + dialog.file_path.split("\\\\").last)
           image_listbox.setListData(listData.toArray)
           test_pane.repaint()
-          image_listbox.repaint()
+        } catch {
+          case e: Exception => println("Error while adding a new layer.")
+        }
+      }
+    })
+    color_selection.addActionListener(new ActionListener {
+      override def actionPerformed(e: ActionEvent): Unit = {
+        try {
+          val dialog: SelectionColorDialog = new SelectionColorDialog(frame)
+          dialog.setVisible(true)
+          val color = dialog.color
+          test_pane.rectangle_list.foreach(r => {
+            r.color = color.getRGB
+          })
+          test_pane.repaint()
         } catch {
           case e: Exception => println("Error while adding a new layer.")
         }
       }
     })
     options_menu.add(new_layer)
+    options_menu.add(color_selection)
 
     menu_bar.add(file_menu)
     menu_bar.add(options_menu)
@@ -305,15 +356,19 @@ object Test extends App {
     image_list.foreach(i => listData += ("Layer " + i.layer + ": " + i.name))
     image_listbox.setListData(listData.toArray)
     test_pane.update_list(image_list)
+    test_pane.changed = true
     test_pane.repaint()
   }
 
   private def init_listbox() = {
     image_listbox.addMouseListener(new MouseAdapter {
       override def mousePressed(e: MouseEvent): Unit = {
+        val file_name = image_listbox.getSelectedValue.split(" ").last
+        val selectedValue = image_list.find(i => i.name == file_name).head
         if (SwingUtilities.isRightMouseButton(e)) {
           val menu = new JPopupMenu()
           val opacity_item = new JMenuItem("Change opacity")
+          val change_status = if (selectedValue.active) new JMenuItem("Make inactive") else new JMenuItem("Make active")
           val move_up_item = new JMenuItem("Move layer up")
           val move_down_item = new JMenuItem("Move layer down")
 
@@ -324,11 +379,10 @@ object Test extends App {
                 dialog.setVisible(true)
 
                 val opacity: Double = dialog.opacity
-                println(opacity)
                 if (opacity < 0)
                   throw new Exception("Error")
 
-                val file_name = image_listbox.getSelectedValue.split(" ").last
+
                 val new_list: ListBuffer[ImageInfo] = ListBuffer()
                 image_list.foreach(i => {
                   if (i.name == file_name)
@@ -343,10 +397,26 @@ object Test extends App {
             }
           })
 
+          change_status.addActionListener(new ActionListener() {
+            def actionPerformed(e: ActionEvent): Unit = {
+              try {
+                val file_name = image_listbox.getSelectedValue.split(" ").last
+                val found = image_list.find(i => i.name == file_name).head
+                found.active = !found.active
+
+                val new_list: ListBuffer[ImageInfo] = ListBuffer()
+                image_list.foreach(i => new_list += i)
+                update_image_list(new_list)
+                image_listbox.repaint()
+              } catch {
+                case e: Exception => println("Error while changing layer status.")
+              }
+            }
+          })
+
           move_up_item.addActionListener(new ActionListener() {
             def actionPerformed(e: ActionEvent): Unit = {
               val file_name = image_listbox.getSelectedValue.split(" ").last
-              println(file_name)
               var selected_layer: Int = -1
               val new_list: ListBuffer[ImageInfo] = ListBuffer()
               image_list.foreach(i => {
@@ -381,6 +451,7 @@ object Test extends App {
           })
 
           menu.add(opacity_item)
+          menu.add(change_status)
           menu.add(move_up_item)
           menu.add(move_down_item)
           menu.show(image_listbox, e.getX, e.getY)
