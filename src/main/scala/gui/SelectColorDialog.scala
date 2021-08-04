@@ -4,14 +4,14 @@ import java.awt._
 import java.awt.event._
 import javax.swing._
 
-class SelectionColorDialog(owner: JFrame) extends JDialog(owner, true) {
+class SelectColorDialog(owner: JFrame) extends JDialog(owner, true) {
   var color: Color = null
 
   private def init(): Unit = {
-    setTitle("New Layer")
+    setTitle("Select Color")
     setAlwaysOnTop(true)
     setVisible(false)
-    setBounds(500, 400, 500, 150)
+    setBounds(500, 400, 500, 500)
     setLayout(new GridLayout(2, 1))
     val color_chooser = new JColorChooser()
     val confirm_color = new JButton("Finish")

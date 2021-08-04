@@ -4,20 +4,18 @@ import java.awt._
 import java.awt.event._
 import javax.swing._
 import gui._
-import javafx.scene.input.MouseButton
-import misc.{ImageInfo, ProjectInfo, RectangleInfo}
+import misc.{ImageInfo, ProjectInfo, RectangleInfo, SelectionInfo}
 import layering.Layering
 
-import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
-import javax.swing.event.MouseInputAdapter
 import scala.collection.mutable
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable._
 
 class TestPane(var image_list: ListBuffer[ImageInfo]) extends JPanel {
   override def getPreferredSize = new Dimension(400, 200)
 
+  var curr_selection: SelectionInfo = null
   var rectangle_list: ListBuffer[RectangleInfo] = ListBuffer()
   var orig_x = -1
   var orig_y = -1
@@ -38,8 +36,7 @@ class TestPane(var image_list: ListBuffer[ImageInfo]) extends JPanel {
       queue += rects.remove(0)
       while(!queue.isEmpty) {
         val rect_0 = queue.remove(0)
-        var rect_iter = rects.iterator
-        var ind: Int = 0
+        val rect_iter = rects.iterator
         while (rect_iter.hasNext) {
           val rect_1 = rect_iter.next()
           val r0: Rectangle = new Rectangle(rect_0.orig_x, rect_0.orig_y, rect_0.dest_x - rect_0.orig_x, rect_0.dest_y - rect_0.orig_y)
@@ -155,32 +152,6 @@ class TestPane(var image_list: ListBuffer[ImageInfo]) extends JPanel {
     if (changed == true) {
       image_list.foreach(i => {
         if (i.active) {
-          val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
-          rectangle_list.foreach(ri => {
-            val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
-            if (temp_rect.intersects(r)) {
-              val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
-
-              val y = if (r.getY <= temp_rect.getY) temp_rect.y else r.y
-
-
-              val width = if (r.getX <= temp_rect.getX) r.getX + r.getWidth - temp_rect.getX
-                          else if (r.getX + r.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - r.getX
-                          else r.getWidth
-
-              val height = if (r.getY <= temp_rect.getY) r.getY + r.getHeight - temp_rect.getY
-                            else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
-                            else r.getHeight
-
-              val rgb = i.image.getRGB(x, y, width.toInt, height.toInt, null, 0, width.toInt)
-              val rgb_new = ListBuffer[Int]()
-              rgb.foreach(c => {
-                rgb_new += ri.color
-              })
-              if (ri.color != 0)
-                i.image.setRGB(x, y, width.toInt, height.toInt, rgb_new.toArray, 0, width.toInt)
-            }
-          })
           g.drawImage(i.image, 0, 0, null)
         }
       })
@@ -201,21 +172,15 @@ class TestPane(var image_list: ListBuffer[ImageInfo]) extends JPanel {
   }
 
   def init(): Unit = {
-    var pressed: MouseEvent = null
     this.addMouseListener(new MouseAdapter {
       override def mousePressed(e: MouseEvent): Unit = {
-        pressed = e
-        println("ORIGIN")
         orig_x = e.getX
         orig_y = e.getY
-
-        println("x = " + e.getX)
-        println("y = " + e.getY)
       }
 
       override def mouseReleased(e: MouseEvent): Unit = {
-        pressed = null
         rectangle_list += new RectangleInfo(orig_x, orig_y, dest_x, dest_y)
+        changed = true
         repaint()
       }
     })
@@ -318,6 +283,7 @@ object Test extends App {
           image_list += new ImageInfo(dialog.file_path.split("\\\\").last, ImageIO.read(new File(dialog.file_path)), layer_number - 1)
           listData += ("Layer " + (layer_number-1) + ": " + dialog.file_path.split("\\\\").last)
           image_listbox.setListData(listData.toArray)
+          test_pane.changed = true
           test_pane.repaint()
         } catch {
           case e: Exception => println("Error while adding a new layer.")
@@ -327,12 +293,13 @@ object Test extends App {
     color_selection.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
-          val dialog: SelectionColorDialog = new SelectionColorDialog(frame)
+          val dialog: SelectColorDialog = new SelectColorDialog(frame)
           dialog.setVisible(true)
           val color = dialog.color
           test_pane.rectangle_list.foreach(r => {
             r.color = color.getRGB
           })
+          test_pane.changed = true
           test_pane.repaint()
         } catch {
           case e: Exception => println("Error while adding a new layer.")
@@ -342,8 +309,153 @@ object Test extends App {
     options_menu.add(new_layer)
     options_menu.add(color_selection)
 
+    val edit_menu = new JMenu("Edit")
+    val to_grayscale = new JMenuItem("To Grayscale")
+    val to_negative = new JMenuItem("To Negative")
+    val to_median_filter = new JMenuItem("To Median Filter")
+    val to_weighted_median_filter = new JMenuItem("To Weighted Median Filter")
+    to_grayscale.addActionListener(new ActionListener {
+      override def actionPerformed(e: ActionEvent): Unit = {
+        try {
+          if (test_pane.rectangle_list.isEmpty) {
+            image_list.foreach(i => {
+              if (i.active) {
+                i.pixels.foreach(p => p.grayscale())
+                i.update_image()
+              }
+            })
+          } else {
+            image_list.foreach(i => {
+              if (i.active) {
+                val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+                test_pane.rectangle_list.foreach(ri => {
+                  val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
+                  if (temp_rect.intersects(r)) {
+                    val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
+
+                    val y = if (r.getY <= temp_rect.getY) temp_rect.y else r.y
+
+
+                    val width = if (r.getX <= temp_rect.getX) r.getX + r.getWidth - temp_rect.getX
+                    else if (r.getX + r.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - r.getX
+                    else r.getWidth
+
+                    val height = if (r.getY <= temp_rect.getY) r.getY + r.getHeight - temp_rect.getY
+                    else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
+                    else r.getHeight
+
+                    i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) p.grayscale())
+                  }
+                })
+                i.update_image()
+              }
+            })
+          }
+          test_pane.changed = true
+          test_pane.repaint()
+        } catch {
+          case e: Exception => println("Error while adding applying grayscale.")
+        }
+      }
+    })
+    to_negative.addActionListener(new ActionListener {
+      override def actionPerformed(e: ActionEvent): Unit = {
+        try {
+          if (test_pane.rectangle_list.isEmpty) {
+            image_list.foreach(i => {
+              if (i.active) {
+                val t0 = System.nanoTime()
+                i.pixels.foreach(p => p.negative())
+                i.update_image()
+              }
+            })
+          } else {
+            image_list.foreach(i => {
+              if (i.active) {
+                val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+                test_pane.rectangle_list.foreach(ri => {
+                  val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
+                  if (temp_rect.intersects(r)) {
+                    val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
+
+                    val y = if (r.getY <= temp_rect.getY) temp_rect.y else r.y
+
+
+                    val width = if (r.getX <= temp_rect.getX) r.getX + r.getWidth - temp_rect.getX
+                    else if (r.getX + r.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - r.getX
+                    else r.getWidth
+
+                    val height = if (r.getY <= temp_rect.getY) r.getY + r.getHeight - temp_rect.getY
+                    else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
+                    else r.getHeight
+
+                    i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) p.negative())
+                  }
+                })
+                i.update_image()
+              }
+            })
+          }
+          test_pane.changed = true
+          test_pane.repaint()
+        } catch {
+          case e: Exception => println("Error while applying negative.")
+        }
+      }
+    })
+    to_median_filter.addActionListener(new ActionListener {
+      override def actionPerformed(e: ActionEvent): Unit = {
+        try {
+          if (test_pane.rectangle_list.isEmpty) {
+            image_list.foreach(i => {
+              if (i.active) {
+                i.pixels.foreach(p => p.median_filter(i.pixels.toArray, 3))
+                i.update_image()
+              }
+            })
+          } else {
+            image_list.foreach(i => {
+              if (i.active) {
+                val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+                test_pane.rectangle_list.foreach(ri => {
+                  val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
+                  if (temp_rect.intersects(r)) {
+                    val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
+
+                    val y = if (r.getY <= temp_rect.getY) temp_rect.y else r.y
+
+
+                    val width = if (r.getX <= temp_rect.getX) r.getX + r.getWidth - temp_rect.getX
+                    else if (r.getX + r.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - r.getX
+                    else r.getWidth
+
+                    val height = if (r.getY <= temp_rect.getY) r.getY + r.getHeight - temp_rect.getY
+                    else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
+                    else r.getHeight
+
+                    i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
+                      p.median_filter(i.pixels.toArray, 3))
+                  }
+                })
+                i.update_image()
+              }
+            })
+          }
+          test_pane.changed = true
+          test_pane.repaint()
+        } catch {
+          case e: Exception => println("Error while applying negative.")
+        }
+      }
+    })
+    edit_menu.add(to_grayscale)
+    edit_menu.add(to_negative)
+    edit_menu.add(to_median_filter)
+    edit_menu.add(to_weighted_median_filter)
+
     menu_bar.add(file_menu)
     menu_bar.add(options_menu)
+    menu_bar.add(edit_menu)
     menu_bar
   }
 
