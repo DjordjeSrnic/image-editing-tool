@@ -1,11 +1,13 @@
 package image
 
 import java.awt.Color
+import scala.collection.GenSeq
 import scala.collection.mutable.ListBuffer
 import scala.math._
 
 class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double, var A: Double) {
 
+  val op_sequence: ListBuffer[(Double, Double, Double) => Pixel] = new ListBuffer[(Double, Double, Double) => Pixel]()
   var color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
 
   def + (const: (Double, Double, Double)): Pixel = const match {
@@ -63,6 +65,15 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
       else new Pixel(this.x, this.y, this.R, this.G, this.B, this.A)
     }
   }
+
+  def set_opacity(A: Double) = {
+    this.A = A
+    color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
+  }
+
+  /*def composite(x: (Double, Double, Double)): Pixel = {
+    val ret = op_sequence.foldLeft(x)((acc, curr) => curr(acc._1, acc._2, acc._3))
+  }*/
 
   def negative() = {
     this.R = 1 - this.R

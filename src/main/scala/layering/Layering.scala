@@ -39,10 +39,15 @@ object Layering {
 
   def makeImageTranslucent(source: BufferedImage, alpha: Double): BufferedImage = {
     val target = new BufferedImage(source.getWidth, source.getHeight, java.awt.Transparency.TRANSLUCENT)
+    println(source.getTransparency)
+    val c_hex = source.getRGB(0, 0).toHexString.split("")
+    val a = java.lang.Short.parseShort(c_hex(0) + c_hex(1), 16) / 255.0
+    println("OLD ALPHA: " + a)
+    val d_alpha = 1.0 - a
     // Get the images graphics
     val g = target.createGraphics
     // Set the Graphics composite to Alpha
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha.toFloat))
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha.toFloat + d_alpha.toFloat))
     // Draw the image into the prepared reciver image
     g.drawImage(source, null, 0, 0)
     // let go of all system resources in this Graphics

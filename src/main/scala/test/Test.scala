@@ -7,6 +7,7 @@ import gui._
 import misc.{ImageInfo, ProjectInfo, RectangleInfo, SelectionInfo}
 import layering.Layering
 
+import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
 import scala.collection.mutable
@@ -148,7 +149,6 @@ class TestPane(var image_list: ListBuffer[ImageInfo]) extends JPanel {
   override def paintComponent(g: Graphics): Unit = {
     super.paintComponent(g)
 
-    var cnt_local = 0
     if (changed == true) {
       image_list.foreach(i => {
         if (i.active) {
@@ -206,13 +206,16 @@ object Test extends App {
 
   var image_list: ListBuffer[ImageInfo] = ListBuffer()
   var image_listbox: JList[String] = new JList(listData.toArray)
+  var selection_list: ListBuffer[SelectionInfo] = ListBuffer()
+  var selection_listbox: JList[String] = new JList(listData.toArray)
   var test_pane: TestPane = new TestPane(image_list)
+  var activeSelection: SelectionInfo = null
 
   var file_path: String = ""
   val fc = new JFileChooser()
   val frame = new JFrame("Scala Image Editing Tool")
   frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
-  frame.setSize(new Dimension(1200, 1000))
+  frame.setSize(new Dimension(1430, 1070))
 
 
   def get_menu_bar(): JMenuBar = {
@@ -273,6 +276,8 @@ object Test extends App {
 
     val options_menu = new JMenu("Options")
     val new_layer = new JMenuItem("New Layer")
+    val new_selection = new JMenuItem("New Selection")
+    val save_selection = new JMenuItem("Save Selection")
     val color_selection = new JMenuItem("Color Selection")
     new_layer.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
@@ -287,6 +292,27 @@ object Test extends App {
           test_pane.repaint()
         } catch {
           case e: Exception => println("Error while adding a new layer.")
+        }
+      }
+    })
+    new_selection.addActionListener(new ActionListener {
+      override def actionPerformed(e: ActionEvent): Unit = {
+        test_pane.rectangle_list.clear()
+      }
+    })
+    save_selection.addActionListener(new ActionListener {
+      override def actionPerformed(e: ActionEvent): Unit = {
+        try {
+          val dialog: SaveSelectionDialog = new SaveSelectionDialog(frame)
+          dialog.setVisible(true)
+          val new_selection = new SelectionInfo(dialog.selection_name, null, test_pane.rectangle_list.clone(), false)
+          selection_list += new SelectionInfo(dialog.selection_name, null, test_pane.rectangle_list.clone(), false)
+          selection_listbox.setListData(selection_list.map(_.name).toArray)
+          test_pane.rectangle_list.clear()
+          test_pane.changed = true
+          test_pane.repaint()
+        } catch {
+          case e: Exception => println("Error while adding a new selection.")
         }
       }
     })
@@ -307,6 +333,8 @@ object Test extends App {
       }
     })
     options_menu.add(new_layer)
+    options_menu.add(new_selection)
+    options_menu.add(save_selection)
     options_menu.add(color_selection)
 
     val edit_menu = new JMenu("Edit")
@@ -317,7 +345,7 @@ object Test extends App {
     to_grayscale.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
-          if (test_pane.rectangle_list.isEmpty) {
+          if (activeSelection.rectangles.isEmpty) {
             image_list.foreach(i => {
               if (i.active) {
                 i.pixels.foreach(p => p.grayscale())
@@ -328,13 +356,13 @@ object Test extends App {
             image_list.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
-                test_pane.rectangle_list.foreach(ri => {
+                activeSelection.previous_state += i.copy()
+                activeSelection.rectangles.foreach(ri => {
                   val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
                   if (temp_rect.intersects(r)) {
                     val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
 
                     val y = if (r.getY <= temp_rect.getY) temp_rect.y else r.y
-
 
                     val width = if (r.getX <= temp_rect.getX) r.getX + r.getWidth - temp_rect.getX
                     else if (r.getX + r.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - r.getX
@@ -348,6 +376,7 @@ object Test extends App {
                   }
                 })
                 i.update_image()
+                activeSelection.new_state += i.copy()
               }
             })
           }
@@ -361,10 +390,9 @@ object Test extends App {
     to_negative.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
-          if (test_pane.rectangle_list.isEmpty) {
+          if (activeSelection.rectangles.isEmpty) {
             image_list.foreach(i => {
               if (i.active) {
-                val t0 = System.nanoTime()
                 i.pixels.foreach(p => p.negative())
                 i.update_image()
               }
@@ -373,13 +401,13 @@ object Test extends App {
             image_list.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
-                test_pane.rectangle_list.foreach(ri => {
+                activeSelection.previous_state += i.copy()
+                activeSelection.rectangles.foreach(ri => {
                   val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
                   if (temp_rect.intersects(r)) {
                     val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
 
                     val y = if (r.getY <= temp_rect.getY) temp_rect.y else r.y
-
 
                     val width = if (r.getX <= temp_rect.getX) r.getX + r.getWidth - temp_rect.getX
                     else if (r.getX + r.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - r.getX
@@ -393,6 +421,7 @@ object Test extends App {
                   }
                 })
                 i.update_image()
+                activeSelection.new_state += i.copy()
               }
             })
           }
@@ -406,7 +435,7 @@ object Test extends App {
     to_median_filter.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
-          if (test_pane.rectangle_list.isEmpty) {
+          if (activeSelection.rectangles.isEmpty) {
             image_list.foreach(i => {
               if (i.active) {
                 i.pixels.foreach(p => p.median_filter(i.pixels.toArray, 3))
@@ -417,7 +446,9 @@ object Test extends App {
             image_list.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
-                test_pane.rectangle_list.foreach(ri => {
+                i.update_image()
+                activeSelection.previous_state += i.copy()
+                activeSelection.rectangles.foreach(ri => {
                   val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
                   if (temp_rect.intersects(r)) {
                     val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
@@ -438,6 +469,7 @@ object Test extends App {
                   }
                 })
                 i.update_image()
+                activeSelection.new_state += i.copy()
               }
             })
           }
@@ -472,7 +504,7 @@ object Test extends App {
     test_pane.repaint()
   }
 
-  private def init_listbox() = {
+  private def init_image_listbox() = {
     image_listbox.addMouseListener(new MouseAdapter {
       override def mousePressed(e: MouseEvent): Unit = {
         val file_name = image_listbox.getSelectedValue.split(" ").last
@@ -491,20 +523,23 @@ object Test extends App {
                 dialog.setVisible(true)
 
                 val opacity: Double = dialog.opacity
-                if (opacity < 0)
-                  throw new Exception("Error")
 
 
                 val new_list: ListBuffer[ImageInfo] = ListBuffer()
                 image_list.foreach(i => {
-                  if (i.name == file_name)
-                    new_list += new ImageInfo(i.name, Layering.makeImageTranslucent(i.image, opacity), i.layer)
-                  else
+                  if (i.name == file_name) {
+                    i.pixels.foreach(p => p.set_opacity(opacity))
+                    i.opacity = opacity
+                    i.update_image()
+                    new_list += i
+                  } else
                     new_list += i
                 })
-                update_image_list(new_list.reverse)
+                update_image_list(new_list)
+                test_pane.changed = true
+                test_pane.repaint()
               } catch {
-                case e: Exception => println("Error while adding a new layer.")
+                case e: Exception => println("Error while changing opacity.")
               }
             }
           })
@@ -572,26 +607,132 @@ object Test extends App {
     })
   }
 
+  private def init_selection_listbox() = {
+    selection_listbox.addMouseListener(new MouseAdapter {
+      override def mousePressed(e: MouseEvent): Unit = {
+        val selection_name = selection_listbox.getSelectedValue
+        val selectedValue = selection_list.find(s => s.name == selection_name).head
+        if (SwingUtilities.isRightMouseButton(e)) {
+          val menu = new JPopupMenu()
+          val remove = new JMenuItem("Remove")
+          val change_status = if (selectedValue.active) new JMenuItem("Make inactive") else new JMenuItem("Make active")
+
+          remove.addActionListener(new ActionListener() {
+            def actionPerformed(e: ActionEvent): Unit = {
+              try {
+                if (selectedValue.active) {
+                  val previous_state = selectedValue.previous_state
+
+                  previous_state.foreach(ps => {
+                    val found = image_list.find(i => i.name == ps.name).head
+                    found.image = ps.image
+                    found.pixels = ps.pixels
+                    found.opacity = ps.opacity
+                    found.update_image()
+                  })
+                  activeSelection = null
+                }
+
+                selection_list = selection_list.filter(_.name != selectedValue.name)
+                selection_listbox.setListData(selection_list.map(_.name).toArray)
+                test_pane.changed = true
+                test_pane.repaint()
+              } catch {
+                case e: Exception => println("Error while removing selection.")
+              }
+            }
+          })
+
+          change_status.addActionListener(new ActionListener() {
+            def actionPerformed(e: ActionEvent): Unit = {
+              try {
+                if (selectedValue.active) {
+                  val previous_state = activeSelection.previous_state
+                  previous_state.foreach(ps => {
+                    val found = image_list.find(i => i.name == ps.name).head
+                    found.image = ps.image
+                    found.pixels = ps.pixels.clone()
+                    found.opacity = ps.opacity
+                    found.update_image()
+                  })
+                  selectedValue.active = !selectedValue.active
+                  activeSelection = null
+                } else {
+                  if (activeSelection != null) {
+                    val previous_state = activeSelection.previous_state
+                    previous_state.foreach(ps => {
+                      val found = image_list.find(i => i.name == ps.name).head
+                      found.image = ps.image
+                      found.pixels = ps.pixels.clone()
+                      found.opacity = ps.opacity
+                      found.update_image()
+                    })
+                    val last_selection = selection_list.last
+                    selection_list.foreach(s => {
+                      if (s != last_selection) {
+                        s.previous_state.clear()
+                        last_selection.previous_state.foreach(p => s.previous_state += p)
+                      }
+                    })
+                  }
+
+                  val new_state = selectedValue.new_state
+                  new_state.foreach(ns => {
+                    val found = image_list.find(i => i.name == ns.name).head
+                    found.image = ns.image
+                    found.pixels = ns.pixels.clone()
+                    found.opacity = ns.opacity
+                    found.update_image()
+                  })
+                  selection_list.foreach(s => {
+                    if (s.name != selectedValue.name)
+                      s.active = false
+                  })
+                  selectedValue.active = !selectedValue.active
+                  activeSelection = selectedValue
+                }
+
+                test_pane.changed = true
+                test_pane.repaint()
+              } catch {
+                case e: Exception => println("Error while changing selection status.")
+              }
+            }
+          })
+
+          menu.add(remove)
+          menu.add(change_status)
+          menu.show(selection_listbox, e.getX, e.getY)
+        }
+      }
+    })
+  }
+
 
   frame.setLayout(new GridBagLayout())
   val gbc = new GridBagConstraints()
   frame.setJMenuBar(get_menu_bar)
   gbc.ipady = 1000
-  gbc.ipadx = 1000
+  gbc.ipadx = 1200
   gbc.gridx = 0
   gbc.gridy = 0
   gbc.fill = GridBagConstraints.HORIZONTAL
   gbc.gridwidth = 3
   test_pane.setBorder(BorderFactory.createLineBorder(Color.black))
   frame.add(test_pane, gbc)
-  val panel = new JPanel()
-  panel.setBorder(BorderFactory.createLineBorder(Color.black))
   gbc.ipady = 1000
   gbc.ipadx = 200
   gbc.gridx = 3
   gbc.gridy = 0
-  init_listbox()
-  frame.add(image_listbox, gbc)
+  gbc.gridwidth = 1
+  init_image_listbox()
+  init_selection_listbox()
+  image_listbox.setBorder(BorderFactory.createLineBorder(Color.black))
+  selection_listbox.setBorder(BorderFactory.createLineBorder(Color.black))
+  val list_panel = new JPanel(new GridLayout(2, 1))
+  list_panel.add(image_listbox)
+  list_panel.add(selection_listbox)
+  frame.add(list_panel, gbc)
   frame.setLocationRelativeTo(null)
   frame.setVisible(true)
 
