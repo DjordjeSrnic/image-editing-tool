@@ -94,26 +94,25 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
     val list: ListBuffer[Pixel] = ListBuffer()
 
     neighbors.foreach(p => {
-      if (p.x != x || p.y != y) {
-        val dist: Double = scala.math.sqrt(scala.math.pow(x-p.x, 2) + scala.math.pow(y-p.y, 2))
-        if (dist <= N)
-          list += p
-      }
+      if (scala.math.abs(p.x - x) <= N && scala.math.abs(p.y - y) <= N)
+        list += p
     })
 
-    list.sortBy(p => p.color_value)
+    val lR = list.sortBy(p => p.R)
+    val lG = list.sortBy(p => p.G)
+    val lB = list.sortBy(p => p.B)
     val len: Int = list.length
 
     val median = if (len % 2 == 0) {
-      val r: Double = (list(len/2).R + list(len/2 - 1).R) / 2
-      val g: Double = (list(len/2).G + list(len/2 - 1).G) / 2
-      val b: Double = (list(len/2).B + list(len/2 - 1).B) / 2
+      val r: Double = (lR(len/2).R + lR(len/2 - 1).R) / 2
+      val g: Double = (lG(len/2).G + lG(len/2 - 1).G) / 2
+      val b: Double = (lB(len/2).B + lB(len/2 - 1).B) / 2
 
       (r, g, b)
     } else {
-      val r: Double = list((len-1)/2).R
-      val g: Double = list((len-1)/2).G
-      val b: Double = list((len-1)/2).B
+      val r: Double = lR((len-1)/2).R
+      val g: Double = lG((len-1)/2).G
+      val b: Double = lB((len-1)/2).B
 
       (r, g, b)
     }
@@ -124,28 +123,24 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
     color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
   }
 
-  def weighted_filter(neighbors: Array[Array[Pixel]], weight_matrix: Array[Array[Double]], N: Int): Double = {
-    val start_row: Int = if (x <= N) 0 else x - N
-    val end_row: Int = if (x + N >= neighbors.length) neighbors.length - 1 else x + N
-    val start_col: Int = if (y <= N) 0 else y - N
-    val end_col: Int = if (y + N >= neighbors(0).length) neighbors(0).length - 1 else y + N
+  def weighted_filter(neighbors: Array[Pixel], weight_matrix: Array[Double], N: Int): Unit = {
+    var cnt = 0
+    var sumR: Double = 0
+    var sumG: Double = 0
+    var sumB: Double = 0
 
-    val list: ListBuffer[Pixel] = ListBuffer()
-    var sum: Double = 0
-    var cnt: Int = 0
-    for (i <- start_row to end_row)
-      for (j <- start_col to end_col) {
-        val dist: Double = scala.math.sqrt(scala.math.pow(x-neighbors(i)(j).x, 2) + scala.math.pow(y-neighbors(i)(j).y, 2))
-        if (dist <= N) {
-          val r: Double = neighbors(i)(j).R
-          val g: Double = neighbors(i)(j).G
-          val b: Double = neighbors(i)(j).B
-          sum = sum + weight_matrix(i)(j) * (0.299*r + 0.587*r + 0.114*r)
-          cnt = cnt + 1
-        }
+    neighbors.foreach(p => {
+      if (scala.math.abs(p.x - x) <= N && scala.math.abs(p.y - y) <= N) {
+        sumR += weight_matrix(cnt) * p.R
+        sumG += weight_matrix(cnt) * p.G
+        sumB += weight_matrix(cnt) * p.B
+        cnt += 1
       }
+    })
 
-    sum = sum/cnt
-    sum
+    this.R = sumR / cnt
+    this.G = sumG / cnt
+    this.B = sumB / cnt
+    color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
   }
 }

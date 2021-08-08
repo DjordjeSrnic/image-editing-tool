@@ -434,11 +434,15 @@ object Test extends App {
     })
     to_median_filter.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
+        val dialog: SelectNDialog = new SelectNDialog(frame)
+        dialog.setVisible(true)
+        val N = dialog.N
+
         try {
-          if (activeSelection.rectangles.isEmpty) {
+          if (activeSelection == null || activeSelection.rectangles.isEmpty) {
             image_list.foreach(i => {
               if (i.active) {
-                i.pixels.foreach(p => p.median_filter(i.pixels.toArray, 3))
+                i.pixels.foreach(p => p.median_filter(i.pixels.toArray, N))
                 i.update_image()
               }
             })
@@ -465,7 +469,7 @@ object Test extends App {
                     else r.getHeight
 
                     i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                      p.median_filter(i.pixels.toArray, 3))
+                      p.median_filter(i.pixels.toArray, N))
                   }
                 })
                 i.update_image()
@@ -476,7 +480,63 @@ object Test extends App {
           test_pane.changed = true
           test_pane.repaint()
         } catch {
-          case e: Exception => println("Error while applying negative.")
+          case e: Exception => println("Error while applying median filter.")
+        }
+      }
+    })
+    to_weighted_median_filter.addActionListener(new ActionListener {
+      override def actionPerformed(e: ActionEvent): Unit = {
+        val dialog: SelectNDialog = new SelectNDialog(frame)
+        dialog.setVisible(true)
+        val N = dialog.N
+
+        val matrix_dialog: SelectMatrixDialog = new SelectMatrixDialog(frame, N)
+        matrix_dialog.setVisible(true)
+        val weights = matrix_dialog.matrix.clone().toArray
+
+        try {
+          if (activeSelection == null || activeSelection.rectangles.isEmpty) {
+            image_list.foreach(i => {
+              if (i.active) {
+                i.pixels.foreach(p => p.weighted_filter(i.pixels.toArray, weights, N))
+                i.update_image()
+              }
+            })
+          } else {
+            image_list.foreach(i => {
+              if (i.active) {
+                val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+                i.update_image()
+                activeSelection.previous_state += i.copy()
+                activeSelection.rectangles.foreach(ri => {
+                  val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
+                  if (temp_rect.intersects(r)) {
+                    val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
+
+                    val y = if (r.getY <= temp_rect.getY) temp_rect.y else r.y
+
+
+                    val width = if (r.getX <= temp_rect.getX) r.getX + r.getWidth - temp_rect.getX
+                    else if (r.getX + r.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - r.getX
+                    else r.getWidth
+
+                    val height = if (r.getY <= temp_rect.getY) r.getY + r.getHeight - temp_rect.getY
+                    else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
+                    else r.getHeight
+
+                    i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
+                      p.median_filter(i.pixels.toArray, N))
+                  }
+                })
+                i.update_image()
+                activeSelection.new_state += i.copy()
+              }
+            })
+          }
+          test_pane.changed = true
+          test_pane.repaint()
+        } catch {
+          case e: Exception => println("Error while applying weighted median filter.")
         }
       }
     })
