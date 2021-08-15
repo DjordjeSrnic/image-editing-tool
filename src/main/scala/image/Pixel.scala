@@ -1,5 +1,7 @@
 package image
 
+import image.Pixel.max_pixel_value
+
 import java.awt.Color
 import scala.collection.GenSeq
 import scala.collection.mutable.ListBuffer
@@ -7,62 +9,102 @@ import scala.math._
 
 class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double, var A: Double) {
 
-  val op_sequence: ListBuffer[(Double, Double, Double) => Pixel] = new ListBuffer[(Double, Double, Double) => Pixel]()
+  val op_sequence: ListBuffer[MethodInfo] = new ListBuffer[MethodInfo]()
   var color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
 
-  def + (const: (Double, Double, Double)): Pixel = const match {
-    case (d_r, d_g, d_b) =>
-      new Pixel(this.x, this.y, this.R + d_r, this.G + d_g, this.B + d_b, this.A)
-  }
-
-  def - (const: (Double, Double, Double)): Pixel = const match {
-    case (d_r, d_g, d_b) =>
-      new Pixel(this.x, this.y, this.R - d_r, this.G - d_g, this.B - d_b, this.A)
-  }
-
-  def :- (const: (Double, Double, Double)): Pixel = const match {
-    case (d_r, d_g, d_b) =>
-      new Pixel(this.x, this.y, d_r - this.R, d_g - this.G, d_b - this.B, this.A)
-  }
-
-  def * (const: (Double, Double, Double)): Pixel = const match {
-    case (d_r, d_g, d_b) =>
-      new Pixel(this.x, this.y, this.R * d_r, this.G * d_g, this.B * d_b, this.A)
-  }
-
-  def / (const: (Double, Double, Double)): Pixel = const match {
-    case (d_r, d_g, d_b) =>
-      new Pixel(this.x, this.y, this.R / d_r, this.G / d_g, this.B / d_b, this.A)
-  }
-
-  def power (const: (Double, Double, Double)): Pixel = const match {
-    case (p_r, p_g, p_b) =>
-      new Pixel(this.x, this.y, scala.math.pow(this.R, p_r), scala.math.pow(this.G, p_g), scala.math.pow(this.B, p_b), this.A)
-  }
-
-  def log: Pixel = {
-    new Pixel(this.x, this.y, scala.math.log(this.R), scala.math.log(this.G), scala.math.log(this.B), this.A)
-  }
-
-  def abs: Pixel = {
-    new Pixel(this.x, this.y, scala.math.abs(this.R), scala.math.abs(this.G), scala.math.abs(this.B), this.A)
-  }
-
-  def min (const: (Double, Double, Double)): Pixel = const match {
-    case (r, g, b) => {
-      val A: Double = 0.299*this.R + 0.587*this.G + 0.114*this.B
-      val B: Double = 0.299*r + 0.587*r + 0.114*b
-      if (A > B) new Pixel(this.x, this.y, r, g, b, this.A)
-      else new Pixel(this.x, this.y, this.R, this.G, this.B, this.A)
+  def + (const: (Double, Double, Double)) = const match {
+    case (d_r, d_g, d_b) => {
+      this.R = this.R + d_r
+      this.G = this.G + d_g
+      this.B = this.B + d_b
     }
   }
 
-  def max (const: (Double, Double, Double)): Pixel = const match {
+  def - (const: (Double, Double, Double)) = const match {
+    case (d_r, d_g, d_b) => {
+      this.R = this.R - d_r
+      this.G = this.G - d_g
+      this.B = this.B - d_b
+    }
+  }
+
+  def :- (const: (Double, Double, Double)) = const match {
+    case (d_r, d_g, d_b) => {
+      this.R = d_r - this.R
+      this.G = d_g - this.G
+      this.B = d_b - this.B
+    }
+  }
+
+  def * (const: (Double, Double, Double)) = const match {
+    case (d_r, d_g, d_b) => {
+      this.R = this.R * d_r
+      this.G = this.G * d_g
+      this.B = this.B * d_b
+    }
+  }
+
+  def / (const: (Double, Double, Double)) = const match {
+    case (d_r, d_g, d_b) => {
+      this.R = this.R / d_r
+      this.G = this.G / d_g
+      this.B = this.B / d_b
+    }
+  }
+
+  def :/ (const: (Double, Double, Double)) = const match {
+    case (d_r, d_g, d_b) => {
+      this.R = d_r / this.R
+      this.G = d_g / this.G
+      this.B = d_b / this.B
+    }
+  }
+
+  def power (const: (Double, Double, Double)) = const match {
+    case (p_r, p_g, p_b) => {
+      this.R = scala.math.pow(this.R, p_r)
+      this.G = scala.math.pow(this.G, p_g)
+      this.B = scala.math.pow(this.B, p_b)
+    }
+  }
+
+  def log (const: (Double, Double, Double) = (1.0, 1.0, 1.0)) = {
+    val c: Double = 1.0 / scala.math.log(1/255 + max_pixel_value)
+
+    this.R = c * scala.math.log(1/255 + this.R)
+    this.G = c * scala.math.log(1/255 + this.G)
+    this.B = c * scala.math.log(1/255 + this.B)
+  }
+
+  def abs (const: (Double, Double, Double)) = const match {
+    case (p_r, p_g, p_b) => {
+      this.R = scala.math.abs(this.R - p_r)
+      this.G = scala.math.abs(this.G - p_g)
+      this.B = scala.math.abs(this.B - p_b)
+    }
+  }
+
+  def min (const: (Double, Double, Double)) = const match {
     case (r, g, b) => {
-      val A: Double = 0.299*this.R + 0.587*this.G + 0.114*this.B
-      val B: Double = 0.299*r + 0.587*g + 0.114*b
-      if (A < B) new Pixel(this.x, this.y, r, g, b, this.A)
-      else new Pixel(this.x, this.y, this.R, this.G, this.B, this.A)
+      val A: Int = new Color((this.R*255).toInt, (this.G*255).toInt, (this.B*255).toInt, (this.A*255).toInt).getRGB
+      val B: Int = new Color((r*255).toInt, (g*255).toInt, (b*255).toInt, (this.A*255).toInt).getRGB
+      if (A > B) {
+        this.R = r
+        this.G = g
+        this.B = b
+      }
+    }
+  }
+
+  def max (const: (Double, Double, Double)) = const match {
+    case (r, g, b) => {
+      val A: Int = new Color((this.R*255).toInt, (this.G*255).toInt, (this.B*255).toInt, (this.A*255).toInt).getRGB
+      val B: Int = new Color((r*255).toInt, (g*255).toInt, (b*255).toInt, (this.A*255).toInt).getRGB
+      if (A < B) {
+        this.R = r
+        this.G = g
+        this.B = b
+      }
     }
   }
 
@@ -143,4 +185,25 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
     this.B = sumB / cnt
     color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
   }
+
+  def execute_methods() = {
+    op_sequence.foreach(o => {
+      o.func(o.args._1, o.args._2, o.args._3)
+    })
+
+    if (R < 0 || R > 1.0)
+       R = 1.0
+
+    if (G < 0 || G > 1.0)
+       G = 1.0
+
+    if (B < 0 || B > 1.0)
+       B = 1.0
+
+    color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
+  }
+}
+
+object Pixel {
+  var max_pixel_value: Double = 0
 }

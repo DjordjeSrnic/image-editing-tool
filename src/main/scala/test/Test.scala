@@ -342,6 +342,7 @@ object Test extends App {
     val to_negative = new JMenuItem("To Negative")
     val to_median_filter = new JMenuItem("To Median Filter")
     val to_weighted_median_filter = new JMenuItem("To Weighted Median Filter")
+    val calculator = new JMenuItem("Open Calculator")
     to_grayscale.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
@@ -540,10 +541,55 @@ object Test extends App {
         }
       }
     })
+    calculator.addActionListener(new ActionListener {
+      override def actionPerformed(e: ActionEvent): Unit = {
+        try {
+          if (activeSelection == null || activeSelection.rectangles.isEmpty) {
+            val calculator_dialog: PixelCalculatorDialog = new PixelCalculatorDialog(image_list, frame)
+            calculator_dialog.setVisible(true)
+          } else {
+            /*image_list.foreach(i => {
+              if (i.active) {
+                val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+                i.update_image()
+                activeSelection.previous_state += i.copy()
+                activeSelection.rectangles.foreach(ri => {
+                  val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
+                  if (temp_rect.intersects(r)) {
+                    val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
+
+                    val y = if (r.getY <= temp_rect.getY) temp_rect.y else r.y
+
+
+                    val width = if (r.getX <= temp_rect.getX) r.getX + r.getWidth - temp_rect.getX
+                    else if (r.getX + r.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - r.getX
+                    else r.getWidth
+
+                    val height = if (r.getY <= temp_rect.getY) r.getY + r.getHeight - temp_rect.getY
+                    else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
+                    else r.getHeight
+
+                    i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
+                      p.median_filter(i.pixels.toArray, N))
+                  }
+                })
+                i.update_image()
+                activeSelection.new_state += i.copy()
+              }
+            })*/
+          }
+          test_pane.changed = true
+          test_pane.repaint()
+        } catch {
+          case e: Exception => println("Error while applying weighted median filter.")
+        }
+      }
+    })
     edit_menu.add(to_grayscale)
     edit_menu.add(to_negative)
     edit_menu.add(to_median_filter)
     edit_menu.add(to_weighted_median_filter)
+    edit_menu.add(calculator)
 
     menu_bar.add(file_menu)
     menu_bar.add(options_menu)
