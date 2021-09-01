@@ -1,13 +1,14 @@
 package gui
 
-import misc.ProjectInfo
+import misc.{ImageInfo, ProjectInfo}
 
 import java.awt._
 import java.awt.event._
 import javax.swing._
 import java.io._
+import scala.collection.mutable.ListBuffer
 
-class SaveProjectDialog(owner: JFrame, image_info: ProjectInfo) extends JDialog(owner, true) {
+class SaveProjectDialog(owner: JFrame, images: ListBuffer[ImageInfo]) extends JDialog(owner, true) {
 
   private val fc: JFileChooser = new JFileChooser()
   val p: JDialog = this
@@ -40,6 +41,12 @@ class SaveProjectDialog(owner: JFrame, image_info: ProjectInfo) extends JDialog(
       override def actionPerformed(e: ActionEvent): Unit = {
         val file = new File(project_path.getText)
         val bw = new BufferedWriter(new FileWriter(file))
+
+        images.foreach(i => {
+          val path = "images/" + i.name
+          val rgb = i.image.getRGB(0, 0, i.image.getWidth, i.image.getHeight, null, 0, image.getWidth)
+        })
+
         bw.write("Hello, New World!")
         bw.close()
         dispose()
