@@ -20,7 +20,7 @@ object Test extends App {
   import javax.swing.JList
 
   var layer_number:Int = 0
-  val listData: ListBuffer[String] = ListBuffer()
+  var listData: ListBuffer[String] = ListBuffer()
 
   var image_list: ListBuffer[ImageInfo] = ListBuffer()
   var image_listbox: JList[String] = new JList(listData.toArray)
@@ -47,10 +47,8 @@ object Test extends App {
         try {
           val dialog: NewProjectDialog = new NewProjectDialog(frame)
           dialog.setVisible(true)
-          println(dialog.file_path)
           layer_number += 1
           image_list += new ImageInfo(dialog.file_path.split("\\\\").last, ImageIO.read(new File(dialog.file_path)), layer_number-1)
-          println(image_list.last.toString)
           listData += ("Layer " + (layer_number-1) + ": " + dialog.file_path.split("\\\\").last)
           image_listbox.setListData(listData.toArray)
           test_pane.changed = true
@@ -67,8 +65,15 @@ object Test extends App {
         try {
           val dialog: ImportProjectDialog= new ImportProjectDialog(frame)
           dialog.setVisible(true)
-          //TO DO
-          //Get image info from dialog
+          image_list = dialog.image_list
+          selection_list = dialog.selection_list
+          listData = dialog.listData
+          selection_listbox.setListData(selection_list.map(_.name).toArray)
+          image_listbox.setListData(listData.toArray)
+          image_listbox.repaint()
+          test_pane.update_list(image_list)
+          test_pane.changed = true
+          test_pane.repaint()
         } catch {
           case e: Exception => println("Error while importing a project.")
         }
@@ -79,10 +84,8 @@ object Test extends App {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
           val info: ProjectInfo = new ProjectInfo(0, true) //PLACEHOLDER
-          val dialog: SaveProjectDialog= new SaveProjectDialog(frame, info)
+          val dialog: SaveProjectDialog= new SaveProjectDialog(frame, image_list, selection_list)
           dialog.setVisible(true)
-          //TO DO
-          //Get image info from dialog
         } catch {
           case e: Exception => println("Error while saving a project.")
         }
@@ -123,7 +126,6 @@ object Test extends App {
         try {
           val dialog: SaveSelectionDialog = new SaveSelectionDialog(frame)
           dialog.setVisible(true)
-          val new_selection = new SelectionInfo(dialog.selection_name, null, test_pane.rectangle_list.clone(), false)
           selection_list += new SelectionInfo(dialog.selection_name, null, test_pane.rectangle_list.clone(), false)
           selection_listbox.setListData(selection_list.map(_.name).toArray)
           test_pane.rectangle_list.clear()
