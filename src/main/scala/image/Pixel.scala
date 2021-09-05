@@ -3,9 +3,8 @@ package image
 import image.Pixel.max_pixel_value
 
 import java.awt.Color
-import scala.collection.GenSeq
 import scala.collection.mutable.ListBuffer
-import scala.math._
+import scala.collection.parallel.CollectionConverters._
 
 class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double, var A: Double) {
 
@@ -132,7 +131,7 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
     color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
   }
 
-  def median_filter(neighbors: Array[Pixel], N: Int) = {
+  def median_filter(neighbors: ListBuffer[Pixel], N: Int) = {
     val list: ListBuffer[Pixel] = ListBuffer()
 
     neighbors.foreach(p => {
@@ -165,13 +164,13 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
     color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
   }
 
-  def weighted_filter(neighbors: Array[Pixel], weight_matrix: Array[Double], N: Int): Unit = {
+  def weighted_filter(neighbors: ListBuffer[Pixel], weight_matrix: Array[Double], N: Int): Unit = {
     var cnt = 0
     var sumR: Double = 0
     var sumG: Double = 0
     var sumB: Double = 0
 
-    neighbors.foreach(p => {
+    neighbors.par.foreach(p => {
       if (scala.math.abs(p.x - x) <= N && scala.math.abs(p.y - y) <= N) {
         sumR += weight_matrix(cnt) * p.R
         sumG += weight_matrix(cnt) * p.G

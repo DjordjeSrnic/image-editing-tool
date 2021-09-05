@@ -4,20 +4,15 @@ import java.awt._
 import java.awt.event._
 import javax.swing._
 import gui._
-import misc.{ImageInfo, ProjectInfo, RectangleInfo, SelectionInfo}
-import layering.Layering
+import misc._
 
-import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
-import scala.collection.mutable
 import scala.collection.mutable._
-
+import scala.collection.parallel.CollectionConverters._
 
 
 object Test extends App {
-
-  import javax.swing.JList
 
   var layer_number:Int = 0
   var listData: ListBuffer[String] = ListBuffer()
@@ -32,7 +27,7 @@ object Test extends App {
   var file_path: String = ""
   val fc = new JFileChooser()
   val frame = new JFrame("Scala Image Editing Tool")
-  frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
+  frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE)
   frame.setSize(new Dimension(1430, 1070))
 
 
@@ -261,19 +256,18 @@ object Test extends App {
 
         try {
           if (activeSelection == null || activeSelection.rectangles.isEmpty) {
-            image_list.foreach(i => {
+            image_list.par.foreach(i => {
               if (i.active) {
-                i.pixels.foreach(p => p.median_filter(i.pixels.toArray, N))
+                i.pixels.par.foreach(p => p.median_filter(i.pixels, N))
                 i.update_image()
               }
             })
           } else {
-            image_list.foreach(i => {
+            image_list.par.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
-                i.update_image()
                 activeSelection.previous_state += i.copy()
-                activeSelection.rectangles.foreach(ri => {
+                activeSelection.rectangles.par.foreach(ri => {
                   val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
                   if (temp_rect.intersects(r)) {
                     val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
@@ -289,8 +283,8 @@ object Test extends App {
                     else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
                     else r.getHeight
 
-                    i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                      p.median_filter(i.pixels.toArray, N))
+                    i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
+                      p.median_filter(i.pixels, N))
                   }
                 })
                 i.update_image()
@@ -301,7 +295,10 @@ object Test extends App {
           test_pane.changed = true
           test_pane.repaint()
         } catch {
-          case e: Exception => println("Error while applying median filter.")
+          case e: Exception =>  {
+            println(e)
+            println("Error while applying median filter.")
+          }
         }
       }
     })
@@ -317,19 +314,19 @@ object Test extends App {
 
         try {
           if (activeSelection == null || activeSelection.rectangles.isEmpty) {
-            image_list.foreach(i => {
+            image_list.par.foreach(i => {
               if (i.active) {
-                i.pixels.foreach(p => p.weighted_filter(i.pixels.toArray, weights, N))
+                i.pixels.par.foreach(p => p.weighted_filter(i.pixels, weights, N))
                 i.update_image()
               }
             })
           } else {
-            image_list.foreach(i => {
+            image_list.par.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
                 i.update_image()
                 activeSelection.previous_state += i.copy()
-                activeSelection.rectangles.foreach(ri => {
+                activeSelection.rectangles.par.foreach(ri => {
                   val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
                   if (temp_rect.intersects(r)) {
                     val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
@@ -345,8 +342,8 @@ object Test extends App {
                     else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
                     else r.getHeight
 
-                    i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                      p.median_filter(i.pixels.toArray, N))
+                    i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
+                      p.weighted_filter(i.pixels, weights, N))
                   }
                 })
                 i.update_image()
@@ -368,35 +365,8 @@ object Test extends App {
             val calculator_dialog: PixelCalculatorDialog = new PixelCalculatorDialog(image_list, frame)
             calculator_dialog.setVisible(true)
           } else {
-            /*image_list.foreach(i => {
-              if (i.active) {
-                val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
-                i.update_image()
-                activeSelection.previous_state += i.copy()
-                activeSelection.rectangles.foreach(ri => {
-                  val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
-                  if (temp_rect.intersects(r)) {
-                    val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
-
-                    val y = if (r.getY <= temp_rect.getY) temp_rect.y else r.y
-
-
-                    val width = if (r.getX <= temp_rect.getX) r.getX + r.getWidth - temp_rect.getX
-                    else if (r.getX + r.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - r.getX
-                    else r.getWidth
-
-                    val height = if (r.getY <= temp_rect.getY) r.getY + r.getHeight - temp_rect.getY
-                    else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
-                    else r.getHeight
-
-                    i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                      p.median_filter(i.pixels.toArray, N))
-                  }
-                })
-                i.update_image()
-                activeSelection.new_state += i.copy()
-              }
-            })*/
+            val calculator_dialog: PixelCalculatorDialog = new PixelCalculatorDialog(image_list, frame, activeSelection)
+            calculator_dialog.setVisible(true)
           }
           test_pane.changed = true
           test_pane.repaint()
