@@ -12,7 +12,7 @@ import scala.collection.mutable._
 import scala.collection.parallel.CollectionConverters._
 
 
-object Test extends App {
+object Main extends App {
 
   var layer_number:Int = 0
   var listData: ListBuffer[String] = ListBuffer()
@@ -78,7 +78,6 @@ object Test extends App {
     save_project.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
-          val info: ProjectInfo = new ProjectInfo(0, true) //PLACEHOLDER
           val dialog: SaveProjectDialog= new SaveProjectDialog(frame, image_list, selection_list)
           dialog.setVisible(true)
         } catch {
@@ -162,14 +161,14 @@ object Test extends App {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
           if (activeSelection.rectangles.isEmpty) {
-            image_list.foreach(i => {
+            image_list.par.foreach(i => {
               if (i.active) {
-                i.pixels.foreach(p => p.grayscale())
+                i.pixels.par.foreach(p => p.grayscale())
                 i.update_image()
               }
             })
           } else {
-            image_list.foreach(i => {
+            image_list.par.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
                 activeSelection.previous_state += i.copy()
@@ -188,11 +187,9 @@ object Test extends App {
                     else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
                     else r.getHeight
 
-                    i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) p.grayscale())
+                    i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) p.grayscale())
                   }
                 })
-                i.update_image()
-                activeSelection.new_state += i.copy()
               }
             })
           }
@@ -207,14 +204,14 @@ object Test extends App {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
           if (activeSelection.rectangles.isEmpty) {
-            image_list.foreach(i => {
+            image_list.par.foreach(i => {
               if (i.active) {
-                i.pixels.foreach(p => p.negative())
+                i.pixels.par.foreach(p => p.negative())
                 i.update_image()
               }
             })
           } else {
-            image_list.foreach(i => {
+            image_list.par.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
                 activeSelection.previous_state += i.copy()
@@ -233,7 +230,7 @@ object Test extends App {
                     else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
                     else r.getHeight
 
-                    i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) p.negative())
+                    i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) p.negative())
                   }
                 })
                 i.update_image()
@@ -258,7 +255,9 @@ object Test extends App {
           if (activeSelection == null || activeSelection.rectangles.isEmpty) {
             image_list.par.foreach(i => {
               if (i.active) {
-                i.pixels.par.foreach(p => p.median_filter(i.pixels, N))
+                i.pixels.par.foreach(p => {
+                  p.median_filter(i.pixels, N, i.image.getWidth, i.image.getHeight)
+                })
                 i.update_image()
               }
             })
@@ -284,7 +283,7 @@ object Test extends App {
                     else r.getHeight
 
                     i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                      p.median_filter(i.pixels, N))
+                      p.median_filter(i.pixels, N, i.image.getWidth, i.image.getHeight))
                   }
                 })
                 i.update_image()
@@ -316,7 +315,7 @@ object Test extends App {
           if (activeSelection == null || activeSelection.rectangles.isEmpty) {
             image_list.par.foreach(i => {
               if (i.active) {
-                i.pixels.par.foreach(p => p.weighted_filter(i.pixels, weights, N))
+                i.pixels.par.foreach(p => p.weighted_filter(i.pixels, weights, N, i.image.getWidth, i.image.getHeight))
                 i.update_image()
               }
             })
@@ -343,7 +342,7 @@ object Test extends App {
                     else r.getHeight
 
                     i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                      p.weighted_filter(i.pixels, weights, N))
+                      p.weighted_filter(i.pixels, weights, N, i.image.getWidth, i.image.getHeight))
                   }
                 })
                 i.update_image()
@@ -420,9 +419,8 @@ object Test extends App {
 
                 val opacity: Double = dialog.opacity
 
-
                 val new_list: ListBuffer[ImageInfo] = ListBuffer()
-                image_list.foreach(i => {
+                image_list.reverse.foreach(i => {
                   if (i.name == file_name) {
                     i.pixels.foreach(p => p.set_opacity(opacity))
                     i.opacity = opacity
@@ -432,8 +430,6 @@ object Test extends App {
                     new_list += i
                 })
                 update_image_list(new_list)
-                test_pane.changed = true
-                test_pane.repaint()
               } catch {
                 case e: Exception => println("Error while changing opacity.")
               }

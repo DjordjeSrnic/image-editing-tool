@@ -1,15 +1,17 @@
-package image
+package misc
 
-import image.Pixel.max_pixel_value
+import misc.Pixel.max_pixel_value
 
 import java.awt.Color
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.collection.parallel.CollectionConverters._
 
 class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double, var A: Double) {
 
   val op_sequence: ListBuffer[MethodInfo] = new ListBuffer[MethodInfo]()
+  val comp_sequence: ListBuffer[MethodInfo] = new ListBuffer[MethodInfo]()
   var color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
+  var cnt = 0
 
   def + (const: (Double, Double, Double)) = const match {
     case (d_r, d_g, d_b) => {
@@ -112,9 +114,24 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
     color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
   }
 
-  /*def composite(x: (Double, Double, Double)): Pixel = {
-    val ret = op_sequence.foldLeft(x)((acc, curr) => curr(acc._1, acc._2, acc._3))
-  }*/
+  def composite(x: (Double, Double, Double)) = {
+    var v = x
+    comp_sequence.reverse.foreach(o => {
+      o.func(v._1, v._2, v._3)
+      v = (R, G, B)
+    })
+
+    if (R < 0 || R > 1.0)
+      R = 1.0
+
+    if (G < 0 || G > 1.0)
+      G = 1.0
+
+    if (B < 0 || B > 1.0)
+      B = 1.0
+
+    color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
+  }
 
   def negative() = {
     this.R = 1 - this.R
@@ -131,13 +148,19 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
     color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
   }
 
-  def median_filter(neighbors: ListBuffer[Pixel], N: Int) = {
+  def median_filter(matrix: ArrayBuffer[Pixel], N: Int, width: Int, height: Int) = {
     val list: ListBuffer[Pixel] = ListBuffer()
 
-    neighbors.foreach(p => {
-      if (scala.math.abs(p.x - x) <= N && scala.math.abs(p.y - y) <= N)
-        list += p
-    })
+    val t1 = System.nanoTime()
+    val start_i = if (y - N < 0) 0 else y - N
+    val start_j = if (x - N < 0) 0 else x - N
+    val end_i = if (y + N >= height) height - 1 else y + N
+    val end_j = if (x + N >= width) width - 1 else x + N
+
+    for(i <- start_i to end_i)
+      for(j <- start_j to end_j) {
+        list += matrix(i*width + j)
+      }
 
     val lR = list.sortBy(p => p.R)
     val lG = list.sortBy(p => p.G)
@@ -162,22 +185,31 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
     this.G = median._2
     this.B = median._3
     color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
+    val t2 = System.nanoTime()
+    if (cnt == 0) {
+      println("ELAPSED TIME: " + (t2-t1) + "ns")
+      cnt += 1
+    }
   }
 
-  def weighted_filter(neighbors: ListBuffer[Pixel], weight_matrix: Array[Double], N: Int): Unit = {
+  def weighted_filter(matrix: ArrayBuffer[Pixel], weight_matrix: Array[Double], N: Int, width: Int, height: Int): Unit = {
     var cnt = 0
     var sumR: Double = 0
     var sumG: Double = 0
     var sumB: Double = 0
 
-    neighbors.par.foreach(p => {
-      if (scala.math.abs(p.x - x) <= N && scala.math.abs(p.y - y) <= N) {
-        sumR += weight_matrix(cnt) * p.R
-        sumG += weight_matrix(cnt) * p.G
-        sumB += weight_matrix(cnt) * p.B
+    val start_i = if (y - N < 0) 0 else y - N
+    val start_j = if (x - N < 0) 0 else x - N
+    val end_i = if (y + N >= height) height - 1 else y + N
+    val end_j = if (x + N >= width) width - 1 else x + N
+
+    for(i <- start_i to end_i)
+      for(j <- start_j to end_j) {
+        sumR += weight_matrix(cnt) * matrix(i*width + j).R
+        sumG += weight_matrix(cnt) * matrix(i*width + j).G
+        sumB += weight_matrix(cnt) * matrix(i*width + j).B
         cnt += 1
       }
-    })
 
     this.R = sumR / cnt
     this.G = sumG / cnt
@@ -205,4 +237,5 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
 
 object Pixel {
   var max_pixel_value: Double = 0
+
 }

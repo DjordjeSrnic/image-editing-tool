@@ -1,13 +1,14 @@
 package gui
 
-import misc.{ImageInfo, MethodInfo, Pixel, SelectionInfo}
+import misc.{ImageInfo, MethodInfo, SelectionInfo}
 
 import java.awt.{GridLayout, Rectangle}
 import java.awt.event.{ActionEvent, ActionListener}
 import javax.swing.{JButton, JDialog, JFrame, JPanel, JTextField}
 import scala.collection.mutable.ListBuffer
+import scala.collection.parallel.CollectionConverters.IterableIsParallelizable
 
-class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, selection: SelectionInfo = null) extends JDialog(owner, true) {
+class CompositePixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, selection: SelectionInfo = null) extends JDialog(owner, true) {
 
   private def init(): Unit = {
     setTitle("Pixel Calculator")
@@ -39,14 +40,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     add.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
-
-        images.foreach(i => {
+        images.par.foreach(i => {
           if (i.active) {
             if (selection == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.+ , (r, g, b)))
+              i.pixels.par.foreach(p => p.op_sequence += new MethodInfo(p.+ , (0, 0, 0)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               selection.rectangles.foreach(ri => {
@@ -65,8 +62,8 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                   else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                   else nr.getHeight
 
-                  i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                    p.op_sequence += new MethodInfo(p.+ , (r, g, b)))
+                  i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
+                    p.op_sequence += new MethodInfo(p.+ , (0, 0, 0)))
                 }
               })
             }
@@ -77,14 +74,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     sub.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
-
-        images.foreach(i => {
+        images.par.foreach(i => {
           if (i.active) {
             if (selection == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.- , (r, g, b)))
+              i.pixels.par.foreach(p => p.op_sequence += new MethodInfo(p.- , (0, 0, 0)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               selection.rectangles.foreach(ri => {
@@ -103,8 +96,8 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                   else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                   else nr.getHeight
 
-                  i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                    p.op_sequence += new MethodInfo(p.- , (r, g, b)))
+                  i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
+                    p.op_sequence += new MethodInfo(p.- , (0, 0, 0)))
                 }
               })
             }
@@ -115,13 +108,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     inv_sub.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
-        images.foreach(i => {
+        images.par.foreach(i => {
           if (i.active) {
             if (selection == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.:- , (r, g, b)))
+              i.pixels.par.foreach(p => p.op_sequence += new MethodInfo(p.:- , (0, 0, 0)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               selection.rectangles.foreach(ri => {
@@ -140,8 +130,8 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                   else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                   else nr.getHeight
 
-                  i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                    p.op_sequence += new MethodInfo(p.:- , (r, g, b)))
+                  i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
+                    p.op_sequence += new MethodInfo(p.:- , (0, 0, 0)))
                 }
               })
             }
@@ -152,13 +142,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     mul.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
-        images.foreach(i => {
+        images.par.foreach(i => {
           if (i.active) {
             if (selection == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.* , (r, g, b)))
+              i.pixels.par.foreach(p => p.op_sequence += new MethodInfo(p.* , (0, 0, 0)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               selection.rectangles.foreach(ri => {
@@ -177,8 +164,8 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                   else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                   else nr.getHeight
 
-                  i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                    p.op_sequence += new MethodInfo(p.* , (r, g, b)))
+                  i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
+                    p.op_sequence += new MethodInfo(p.* , (0, 0, 0)))
                 }
               })
             }
@@ -189,13 +176,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     div.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
-        images.foreach(i => {
+        images.par.foreach(i => {
           if (i.active) {
             if (selection == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p./ , (r, g, b)))
+              i.pixels.par.foreach(p => p.op_sequence += new MethodInfo(p./ , (0, 0, 0)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               selection.rectangles.foreach(ri => {
@@ -214,8 +198,8 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                   else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                   else nr.getHeight
 
-                  i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                    p.op_sequence += new MethodInfo(p./ , (r, g, b)))
+                  i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
+                    p.op_sequence += new MethodInfo(p./ , (0, 0, 0)))
                 }
               })
             }
@@ -226,13 +210,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     inv_div.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
-        images.foreach(i => {
+        images.par.foreach(i => {
           if (i.active) {
             if (selection == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.:/ , (r, g, b)))
+              i.pixels.par.foreach(p => p.op_sequence += new MethodInfo(p.:/ , (0, 0, 0)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               selection.rectangles.foreach(ri => {
@@ -251,8 +232,8 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                   else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                   else nr.getHeight
 
-                  i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                    p.op_sequence += new MethodInfo(p.:/ , (r, g, b)))
+                  i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
+                    p.op_sequence += new MethodInfo(p.:/ , (0, 0, 0)))
                 }
               })
             }
@@ -263,13 +244,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     power.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
-        images.foreach(i => {
+        images.par.foreach(i => {
           if (i.active) {
             if (selection == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.power , (r, g, b)))
+              i.pixels.par.foreach(p => p.op_sequence += new MethodInfo(p.power , (0, 0, 0)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               selection.rectangles.foreach(ri => {
@@ -288,8 +266,8 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                   else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                   else nr.getHeight
 
-                  i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                    p.op_sequence += new MethodInfo(p.power , (r, g, b)))
+                  i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
+                    p.op_sequence += new MethodInfo(p.power , (0, 0, 0)))
                 }
               })
             }
@@ -300,13 +278,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     log.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
-        images.foreach(i => {
+        images.par.foreach(i => {
           if (i.active) {
             if (selection == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.log , (r, g, b)))
+              i.pixels.par.foreach(p => p.op_sequence += new MethodInfo(p.log , (0, 0, 0)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               selection.rectangles.foreach(ri => {
@@ -325,8 +300,8 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                   else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                   else nr.getHeight
 
-                  i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                    p.op_sequence += new MethodInfo(p.log , (r, g, b)))
+                  i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
+                    p.op_sequence += new MethodInfo(p.log , (0, 0, 0)))
                 }
               })
             }
@@ -337,13 +312,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     abs.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
-        images.foreach(i => {
+        images.par.foreach(i => {
           if (i.active) {
             if (selection == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.abs , (r, g, b)))
+              i.pixels.par.foreach(p => p.op_sequence += new MethodInfo(p.abs , (0, 0, 0)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               selection.rectangles.foreach(ri => {
@@ -362,8 +334,8 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                   else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                   else nr.getHeight
 
-                  i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                    p.op_sequence += new MethodInfo(p.abs , (r, g, b)))
+                  i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
+                    p.op_sequence += new MethodInfo(p.abs , (0, 0, 0)))
                 }
               })
             }
@@ -374,13 +346,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     min.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
-        images.foreach(i => {
+        images.par.foreach(i => {
           if (i.active) {
             if (selection == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.min , (r, g, b)))
+              i.pixels.par.foreach(p => p.op_sequence += new MethodInfo(p.min , (0, 0, 0)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               selection.rectangles.foreach(ri => {
@@ -399,8 +368,8 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                   else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                   else nr.getHeight
 
-                  i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                    p.op_sequence += new MethodInfo(p.min , (r, g, b)))
+                  i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
+                    p.op_sequence += new MethodInfo(p.min , (0, 0, 0)))
                 }
               })
             }
@@ -411,13 +380,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     max.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
-        images.foreach(i => {
+        images.par.foreach(i => {
           if (i.active) {
             if (selection == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.max , (r, g, b)))
+              i.pixels.par.foreach(p => p.op_sequence += new MethodInfo(p.max , (0, 0, 0)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               selection.rectangles.foreach(ri => {
@@ -436,8 +402,8 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                   else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                   else nr.getHeight
 
-                  i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                    p.op_sequence += new MethodInfo(p.max , (r, g, b)))
+                  i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
+                    p.op_sequence += new MethodInfo(p.max , (0, 0, 0)))
                 }
               })
             }
@@ -464,10 +430,13 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     finish.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        images.foreach(i => {
+        val r = java.lang.Double.parseDouble(r_text.getText)
+        val g = java.lang.Double.parseDouble(g_text.getText)
+        val b = java.lang.Double.parseDouble(b_text.getText)
+        images.par.foreach(i => {
           if (i.active) {
             selection.previous_state += i.copy()
-            i.pixels.foreach(p => p.execute_methods())
+            i.pixels.par.foreach(p => p.composite((r, g, b)))
             i.update_image()
             selection.new_state += i.copy()
           }

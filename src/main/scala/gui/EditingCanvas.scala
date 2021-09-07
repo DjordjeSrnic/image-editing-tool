@@ -2,7 +2,7 @@ package gui
 
 import misc.{ImageInfo, RectangleInfo, SelectionInfo}
 
-import java.awt.{Dimension, Graphics, Point, Polygon, Rectangle}
+import java.awt._
 import java.awt.event.{MouseAdapter, MouseEvent, MouseMotionAdapter}
 import javax.swing.JPanel
 import scala.collection.mutable
@@ -144,16 +144,19 @@ class EditingCanvas(var image_list: ListBuffer[ImageInfo]) extends JPanel {
   override def paintComponent(g: Graphics): Unit = {
     super.paintComponent(g)
 
+    var g2d: Graphics2D = g.asInstanceOf[Graphics2D]
     if (changed == true) {
       image_list.foreach(i => {
         if (i.active) {
-          g.drawImage(i.image, 0, 0, null)
+          val alpha = i.opacity.toFloat
+          g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha))
+          g2d.drawImage(i.image, 0, 0, null)
         }
       })
       changed = false
     }
 
-    val rect_groups: ListBuffer[ListBuffer[RectangleInfo]] = getOverlapingRectangles(rectangle_list)
+    //val rect_groups: ListBuffer[ListBuffer[RectangleInfo]] = getOverlapingRectangles(rectangle_list)
 
     //    rect_groups.foreach(rg => {
     //      val polygon: Polygon = makePolygon(rg)

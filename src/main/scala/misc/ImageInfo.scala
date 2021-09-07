@@ -1,14 +1,11 @@
 package misc
 
-import image.Pixel
-import layering.Layering
-
 import java.awt.Color
 import java.awt.image.BufferedImage
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 class ImageInfo(val name: String, var image: BufferedImage, val layer: Int, var opacity: Double = 1.0, var active: Boolean = true) {
-  var pixels: ListBuffer[Pixel] = new ListBuffer()
+  var pixels: ArrayBuffer[Pixel] = new ArrayBuffer()
 
   def copy(): ImageInfo = {
     new ImageInfo(name, deepCopy(image), layer, opacity, active)
