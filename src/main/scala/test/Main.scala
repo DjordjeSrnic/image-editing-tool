@@ -22,7 +22,7 @@ object Main extends App {
   var selection_list: ListBuffer[SelectionInfo] = ListBuffer()
   var selection_listbox: JList[String] = new JList(listData.toArray)
   var test_pane: EditingCanvas = new EditingCanvas(image_list)
-  var activeSelection: SelectionInfo = null
+  var selectedSelection: SelectionInfo = null
 
   var file_path: String = ""
   val fc = new JFileChooser()
@@ -120,7 +120,7 @@ object Main extends App {
         try {
           val dialog: SaveSelectionDialog = new SaveSelectionDialog(frame)
           dialog.setVisible(true)
-          selection_list += new SelectionInfo(dialog.selection_name, null, test_pane.rectangle_list.clone(), false)
+          selection_list += new SelectionInfo(dialog.selection_name, null, test_pane.rectangle_list.clone(), false, false)
           selection_listbox.setListData(selection_list.map(_.name).toArray)
           test_pane.rectangle_list.clear()
           test_pane.changed = true
@@ -160,7 +160,7 @@ object Main extends App {
     to_grayscale.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
-          if (activeSelection.rectangles.isEmpty) {
+          if (selectedSelection.rectangles.isEmpty) {
             image_list.par.foreach(i => {
               if (i.active) {
                 i.pixels.par.foreach(p => p.grayscale())
@@ -171,8 +171,7 @@ object Main extends App {
             image_list.par.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
-                activeSelection.previous_state += i.copy()
-                activeSelection.rectangles.foreach(ri => {
+                selectedSelection.rectangles.foreach(ri => {
                   val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
                   if (temp_rect.intersects(r)) {
                     val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
@@ -187,14 +186,17 @@ object Main extends App {
                     else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
                     else r.getHeight
 
-                    i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) p.grayscale())
+                    i.pixels.foreach(p => {
+                      if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
+                        p.grayscale()
+                        ri.changed_pixels += p.clone()
+                      }
+                    })
                   }
                 })
               }
             })
           }
-          test_pane.changed = true
-          test_pane.repaint()
         } catch {
           case e: Exception => println("Error while adding applying grayscale.")
         }
@@ -203,7 +205,7 @@ object Main extends App {
     to_negative.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
-          if (activeSelection.rectangles.isEmpty) {
+          if (selectedSelection.rectangles.isEmpty) {
             image_list.par.foreach(i => {
               if (i.active) {
                 i.pixels.par.foreach(p => p.negative())
@@ -214,8 +216,7 @@ object Main extends App {
             image_list.par.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
-                activeSelection.previous_state += i.copy()
-                activeSelection.rectangles.foreach(ri => {
+                selectedSelection.rectangles.foreach(ri => {
                   val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
                   if (temp_rect.intersects(r)) {
                     val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
@@ -230,16 +231,17 @@ object Main extends App {
                     else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
                     else r.getHeight
 
-                    i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) p.negative())
+                    i.pixels.foreach(p => {
+                      if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
+                        p.negative()
+                        ri.changed_pixels += p.clone()
+                      }
+                    })
                   }
                 })
-                i.update_image()
-                activeSelection.new_state += i.copy()
               }
             })
           }
-          test_pane.changed = true
-          test_pane.repaint()
         } catch {
           case e: Exception => println("Error while applying negative.")
         }
@@ -252,12 +254,10 @@ object Main extends App {
         val N = dialog.N
 
         try {
-          if (activeSelection == null || activeSelection.rectangles.isEmpty) {
+          if (selectedSelection == null || selectedSelection.rectangles.isEmpty) {
             image_list.par.foreach(i => {
               if (i.active) {
-                i.pixels.par.foreach(p => {
-                  p.median_filter(i.pixels, N, i.image.getWidth, i.image.getHeight)
-                })
+                i.pixels.foreach(p => p.median_filter(i.pixels, N, i.image.getWidth, i.image.getHeight))
                 i.update_image()
               }
             })
@@ -265,8 +265,7 @@ object Main extends App {
             image_list.par.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
-                activeSelection.previous_state += i.copy()
-                activeSelection.rectangles.par.foreach(ri => {
+                selectedSelection.rectangles.par.foreach(ri => {
                   val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
                   if (temp_rect.intersects(r)) {
                     val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
@@ -282,17 +281,17 @@ object Main extends App {
                     else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
                     else r.getHeight
 
-                    i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                      p.median_filter(i.pixels, N, i.image.getWidth, i.image.getHeight))
+                    i.pixels.foreach(p => {
+                      if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
+                        p.median_filter(i.pixels, N, i.image.getWidth, i.image.getHeight)
+                        ri.changed_pixels += p.clone()
+                      }
+                    })
                   }
                 })
-                i.update_image()
-                activeSelection.new_state += i.copy()
               }
             })
           }
-          test_pane.changed = true
-          test_pane.repaint()
         } catch {
           case e: Exception =>  {
             println(e)
@@ -312,10 +311,10 @@ object Main extends App {
         val weights = matrix_dialog.matrix.clone().toArray
 
         try {
-          if (activeSelection == null || activeSelection.rectangles.isEmpty) {
+          if (selectedSelection == null || selectedSelection.rectangles.isEmpty) {
             image_list.par.foreach(i => {
               if (i.active) {
-                i.pixels.par.foreach(p => p.weighted_filter(i.pixels, weights, N, i.image.getWidth, i.image.getHeight))
+                i.pixels.foreach(p => p.weighted_filter(i.pixels, weights, N, i.image.getWidth, i.image.getHeight))
                 i.update_image()
               }
             })
@@ -323,9 +322,7 @@ object Main extends App {
             image_list.par.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
-                i.update_image()
-                activeSelection.previous_state += i.copy()
-                activeSelection.rectangles.par.foreach(ri => {
+                selectedSelection.rectangles.par.foreach(ri => {
                   val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
                   if (temp_rect.intersects(r)) {
                     val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
@@ -341,17 +338,17 @@ object Main extends App {
                     else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
                     else r.getHeight
 
-                    i.pixels.par.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt))
-                      p.weighted_filter(i.pixels, weights, N, i.image.getWidth, i.image.getHeight))
+                    i.pixels.foreach(p => {
+                      if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
+                        p.weighted_filter(i.pixels, weights, N, i.image.getWidth, i.image.getHeight)
+                        ri.changed_pixels += p.clone()
+                      }
+                    })
                   }
                 })
-                i.update_image()
-                activeSelection.new_state += i.copy()
               }
             })
           }
-          test_pane.changed = true
-          test_pane.repaint()
         } catch {
           case e: Exception => println("Error while applying weighted median filter.")
         }
@@ -360,17 +357,16 @@ object Main extends App {
     calculator.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
-          if (activeSelection == null || activeSelection.rectangles.isEmpty) {
+          if (selectedSelection == null || selectedSelection.rectangles.isEmpty) {
             val calculator_dialog: PixelCalculatorDialog = new PixelCalculatorDialog(image_list, frame)
             calculator_dialog.setVisible(true)
           } else {
-            val calculator_dialog: PixelCalculatorDialog = new PixelCalculatorDialog(image_list, frame, activeSelection)
+            println("SSSSSSSSSSSSSSSSSSS")
+            val calculator_dialog: PixelCalculatorDialog = new PixelCalculatorDialog(image_list, frame, selection_list)
             calculator_dialog.setVisible(true)
           }
-          test_pane.changed = true
-          test_pane.repaint()
         } catch {
-          case e: Exception => println("Error while applying calculator .")
+          case e: Exception => println("Error while applying calculator.")
         }
       }
     })
@@ -508,25 +504,25 @@ object Main extends App {
           val menu = new JPopupMenu()
           val remove = new JMenuItem("Remove")
           val change_status = if (selectedValue.active) new JMenuItem("Make inactive") else new JMenuItem("Make active")
+          val change_selected = if (selectedValue.selected) new JMenuItem("Deselect") else new JMenuItem("Select")
 
           remove.addActionListener(new ActionListener() {
             def actionPerformed(e: ActionEvent): Unit = {
               try {
-                if (selectedValue.active) {
-                  val previous_state = selectedValue.previous_state
-
-                  previous_state.foreach(ps => {
-                    val found = image_list.find(i => i.name == ps.name).head
-                    found.image = ps.image
-                    found.pixels = ps.pixels
-                    found.opacity = ps.opacity
-                    found.update_image()
-                  })
-                  activeSelection = null
-                }
-
                 selection_list = selection_list.filter(_.name != selectedValue.name)
-                selection_listbox.setListData(selection_list.map(_.name).toArray)
+                image_list.foreach(i => {
+                  i.pixels = i.orig_pixels.clone()
+                  selection_list.foreach(s => {
+                    if (s.active) {
+                      s.rectangles.foreach(r => {
+                        r.changed_pixels.foreach(p => {
+                          i.pixels(p.y * i.image.getWidth + p.x) = p.clone()
+                        })
+                      })
+                    }
+                  })
+                  i.update_image()
+                })
                 test_pane.changed = true
                 test_pane.repaint()
               } catch {
@@ -538,51 +534,20 @@ object Main extends App {
           change_status.addActionListener(new ActionListener() {
             def actionPerformed(e: ActionEvent): Unit = {
               try {
-                if (selectedValue.active) {
-                  val previous_state = activeSelection.previous_state
-                  previous_state.foreach(ps => {
-                    val found = image_list.find(i => i.name == ps.name).head
-                    found.image = ps.image
-                    found.pixels = ps.pixels.clone()
-                    found.opacity = ps.opacity
-                    found.update_image()
-                  })
-                  selectedValue.active = !selectedValue.active
-                  activeSelection = null
-                } else {
-                  if (activeSelection != null) {
-                    val previous_state = activeSelection.previous_state
-                    previous_state.foreach(ps => {
-                      val found = image_list.find(i => i.name == ps.name).head
-                      found.image = ps.image
-                      found.pixels = ps.pixels.clone()
-                      found.opacity = ps.opacity
-                      found.update_image()
-                    })
-                    val last_selection = selection_list.last
-                    selection_list.foreach(s => {
-                      if (s != last_selection) {
-                        s.previous_state.clear()
-                        last_selection.previous_state.foreach(p => s.previous_state += p)
-                      }
-                    })
-                  }
-
-                  val new_state = selectedValue.new_state
-                  new_state.foreach(ns => {
-                    val found = image_list.find(i => i.name == ns.name).head
-                    found.image = ns.image
-                    found.pixels = ns.pixels.clone()
-                    found.opacity = ns.opacity
-                    found.update_image()
-                  })
+                selectedValue.active = !selectedValue.active
+                image_list.foreach(i => {
+                  i.pixels = i.orig_pixels.clone()
                   selection_list.foreach(s => {
-                    if (s.name != selectedValue.name)
-                      s.active = false
+                    if (s.active) {
+                      s.rectangles.foreach(r => {
+                        r.changed_pixels.foreach(p => {
+                          i.pixels(p.y * i.image.getWidth + p.x) = p.clone()
+                        })
+                      })
+                    }
                   })
-                  selectedValue.active = !selectedValue.active
-                  activeSelection = selectedValue
-                }
+                  i.update_image()
+                })
 
                 test_pane.changed = true
                 test_pane.repaint()
@@ -592,8 +557,30 @@ object Main extends App {
             }
           })
 
+          change_selected.addActionListener(new ActionListener() {
+            def actionPerformed(e: ActionEvent): Unit = {
+              try {
+                if (selectedValue.selected) {
+                  selectedSelection = null
+                  selectedValue.selected = !selectedValue.selected
+                } else {
+                  if (selectedSelection != null) {
+                    selectedSelection.selected = false
+                  }
+
+                  selectedSelection = selectedValue
+                  selectedValue.selected = !selectedValue.selected
+                  selectedSelection.selected = true
+                }
+              } catch {
+                case e: Exception => println("Error while changing selection status.")
+              }
+            }
+          })
+
           menu.add(remove)
           menu.add(change_status)
+          menu.add(change_selected)
           menu.show(selection_listbox, e.getX, e.getY)
         }
       }

@@ -435,10 +435,8 @@ class CompositePixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: J
         val b = java.lang.Double.parseDouble(b_text.getText)
         images.par.foreach(i => {
           if (i.active) {
-            selection.previous_state += i.copy()
             i.pixels.par.foreach(p => p.composite((r, g, b)))
             i.update_image()
-            selection.new_state += i.copy()
           }
         })
         dispose()

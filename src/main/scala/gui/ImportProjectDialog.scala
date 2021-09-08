@@ -1,6 +1,6 @@
 package gui
 
-import misc.{ImageInfo, ProjectInfo, RectangleInfo, SelectionInfo}
+import misc.{ImageInfo, Pixel, RectangleInfo, SelectionInfo}
 
 import java.awt._
 import java.awt.event._
@@ -47,19 +47,24 @@ class ImportProjectDialog(owner: JFrame) extends JDialog(owner, true) {
         val br = new BufferedReader(new FileReader(selected_file))
         var curLine: String = null
         var curSelection: SelectionInfo = null
-        var reading_prev = false
-        var reading_new = false
+        var curRectangle: RectangleInfo = null
         val cur_rectangle_list: ListBuffer[RectangleInfo] = new ListBuffer()
         var cur_selection_name = ""
+        var cur_selection_active = false
         curLine = br.readLine()
-        var is_first_selection = true
         while (curLine != null ) {
-          if (!reading_prev && !reading_new && curLine.split("/")(0) == "images") {
+          if (curLine.split("/")(0) == "images") {
             val file_path = curLine
-            val rgb = br.readLine().split(",").map(_.toInt)
+            val new_rgb = br.readLine().split(",").map(_.toInt)
+            val orig_rgb = br.readLine().split(",").map(_.toInt)
             val image = ImageIO.read(new File(file_path))
-            image.setRGB(0, 0, image.getWidth(), image.getHeight(), rgb, 0, image.getWidth())
-            image_list +=  new ImageInfo(file_path.split("/").last, image, layer_number)
+            image.setRGB(0, 0, image.getWidth(), image.getHeight(), new_rgb, 0, image.getWidth())
+            val img_info = new ImageInfo(file_path.split("/").last, image, layer_number)
+            img_info.pixels.foreach(p => {
+              val color = new Color(orig_rgb(p.y * img_info.image.getWidth() + p.x))
+              img_info.orig_pixels(p.y * img_info.image.getWidth() + p.x) = new Pixel(p.x, p.y, color.getRed/255.0, color.getGreen/255.0, color.getBlue/255.0, color.getAlpha/255.0)
+            })
+            image_list += img_info
             listData += ("Layer " + layer_number + ": " + file_path.split("/").last)
             layer_number += 1
           }
@@ -68,10 +73,8 @@ class ImportProjectDialog(owner: JFrame) extends JDialog(owner, true) {
             if (cur_selection_name != "") {
               selection_list += curSelection
             }
-            reading_prev = false
-            reading_new = false
             cur_selection_name = curLine.split("/")(1)
-            println(cur_selection_name)
+            cur_selection_active = curLine.split("/")(2).toBooleanOption.getOrElse(false)
           }
 
           if (curLine.split("/")(0) == "rectangle") {
@@ -80,40 +83,32 @@ class ImportProjectDialog(owner: JFrame) extends JDialog(owner, true) {
             val orig_y = rect_str(1).toInt
             val dest_x = rect_str(2).toInt
             val dest_y = rect_str(3).toInt
-            cur_rectangle_list += new RectangleInfo(orig_x, orig_y, dest_x, dest_y)
+            curRectangle = new RectangleInfo(orig_x, orig_y, dest_x, dest_y)
           }
 
-          if (curLine == "------------------------Previous--------------------------") {
-            curSelection = new SelectionInfo(cur_selection_name, null, cur_rectangle_list, false)
-            reading_prev = true
-            reading_new = false
+          if (curLine.split("/")(0) == "pixel") {
+            val rect_str = curLine.split("/")(1).split("-")
+            val x = rect_str(0).toInt
+            val y = rect_str(1).toInt
+            val R = rect_str(2).toDouble
+            val G = rect_str(3).toDouble
+            val B = rect_str(4).toDouble
+            val A = rect_str(5).toDouble
+            curRectangle.changed_pixels += new Pixel(x, y, R, G, B, A)
           }
 
-          if (reading_prev && !is_first_selection && curLine.split("/")(0) == "images") {
-            val file_path = curLine
-            val rgb = br.readLine().split(",").map(_.toInt)
-            val image = ImageIO.read(new File(file_path))
-            image.setRGB(0, 0, image.getWidth(), image.getHeight(), rgb, 0, image.getWidth())
-            curSelection.previous_state += new ImageInfo(file_path.split("\\\\").last, image, 0)
-          } else if (reading_prev && !is_first_selection) {
-            is_first_selection = false
+          if (curLine == "pixel-end") {
+            cur_rectangle_list += curRectangle
           }
 
-          if (curLine == "------------------------New-------------------------------") {
-            reading_prev = false
-            reading_new = true
+          if (curLine == "rectangle-end") {
+            curSelection = new SelectionInfo(cur_selection_name, null, cur_rectangle_list, cur_selection_active, false)
+            selection_list += curSelection
           }
 
-          if (reading_new && curLine.split("/")(0) == "images") {
-            val file_path = curLine
-            val rgb = br.readLine().split(",").map(_.toInt)
-            val image = ImageIO.read(new File(file_path))
-            image.setRGB(0, 0, image.getWidth(), image.getHeight(), rgb, 0, image.getWidth())
-            curSelection.new_state += new ImageInfo(file_path.split("\\\\").last, image, 0)
-          }
           curLine = br.readLine()
         }
-        selection_list += curSelection
+
         dispose()
       }
     })

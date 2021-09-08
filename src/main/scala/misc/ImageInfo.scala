@@ -6,6 +6,7 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 class ImageInfo(val name: String, var image: BufferedImage, val layer: Int, var opacity: Double = 1.0, var active: Boolean = true) {
   var pixels: ArrayBuffer[Pixel] = new ArrayBuffer()
+  var orig_pixels: ArrayBuffer[Pixel] = new ArrayBuffer()
 
   def copy(): ImageInfo = {
     new ImageInfo(name, deepCopy(image), layer, opacity, active)
@@ -39,6 +40,7 @@ class ImageInfo(val name: String, var image: BufferedImage, val layer: Int, var 
         val a:Double = java.lang.Short.parseShort(c_hex(0) + c_hex(1), 16)/255.0
 
         pixels += new Pixel(x, y, r, g, b, a)
+        orig_pixels += new Pixel(x, y, r, g, b, a)
       }
   }
 

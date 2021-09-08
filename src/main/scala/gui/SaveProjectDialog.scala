@@ -1,6 +1,6 @@
 package gui
 
-import misc.{ImageInfo, ProjectInfo, SelectionInfo}
+import misc.{ImageInfo, SelectionInfo}
 
 import java.awt._
 import java.awt.event._
@@ -46,42 +46,34 @@ class SaveProjectDialog(owner: JFrame, images: ListBuffer[ImageInfo], selections
         bw.newLine()
         images.foreach(i => {
           val path = "images/" + i.name
-          val rgb = i.image.getRGB(0, 0, i.image.getWidth, i.image.getHeight, null, 0, i.image.getWidth)
+          val orig_rgb = i.orig_pixels.map(_.color_value)
+          val new_rgb = i.image.getRGB(0, 0, i.image.getWidth, i.image.getHeight, null, 0, i.image.getWidth)
           bw.write(path)
           bw.newLine()
-          bw.write(rgb.toList.mkString(","))
+          bw.write(new_rgb.toList.mkString(","))
+          bw.newLine()
+          bw.write(orig_rgb.toList.mkString(","))
         })
 
         bw.newLine()
         bw.write("------------------------Selections------------------------")
         bw.newLine()
         selections.foreach(s => {
-          bw.write("selection/" + s.name)
+          bw.write("selection/" + s.name + "/" + s.active)
           bw.newLine()
           s.rectangles.foreach(r => {
             val line = "rectangle/" + r.orig_x + "-" + r.orig_y + "-" + r.dest_x + "-" + r.dest_y
             bw.write(line)
             bw.newLine()
+            r.changed_pixels.foreach(p => {
+              bw.write("pixel/" + p.x + "-" + p.y + "-" + p.R + "-" + p.G + "-" + p.B + "-" + p.A)
+              bw.newLine()
+            })
+            bw.write("pixel-end")
+            bw.newLine()
           })
-          bw.write("------------------------Previous--------------------------")
+          bw.write("rectangle-end")
           bw.newLine()
-          s.previous_state.foreach(p => {
-            val rgb = p.image.getRGB(0, 0, p.image.getWidth, p.image.getHeight, null, 0, p.image.getWidth)
-            bw.write("images/" + p.name)
-            bw.newLine()
-            bw.write(rgb.toList.mkString(","))
-            bw.newLine()
-          })
-
-          bw.write("------------------------New-------------------------------")
-          bw.newLine()
-          s.new_state.foreach(n => {
-            val rgb = n.image.getRGB(0, 0, n.image.getWidth, n.image.getHeight, null, 0, n.image.getWidth)
-            bw.write("images/" + n.name)
-            bw.newLine()
-            bw.write(rgb.toList.mkString(","))
-            bw.newLine()
-          })
         })
 
         bw.close()

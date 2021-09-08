@@ -8,16 +8,22 @@ import scala.collection.parallel.CollectionConverters._
 
 class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double, var A: Double) {
 
-  val op_sequence: ListBuffer[MethodInfo] = new ListBuffer[MethodInfo]()
-  val comp_sequence: ListBuffer[MethodInfo] = new ListBuffer[MethodInfo]()
+  var op_sequence: ListBuffer[MethodInfo] = new ListBuffer[MethodInfo]()
+  var comp_sequence: ListBuffer[MethodInfo] = new ListBuffer[MethodInfo]()
   var color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
   var cnt = 0
 
   def + (const: (Double, Double, Double)) = const match {
     case (d_r, d_g, d_b) => {
+      println("R: " + R)
+      println("G: " + G)
+      println("B: " + B)
       this.R = this.R + d_r
       this.G = this.G + d_g
       this.B = this.B + d_b
+      println("R_A: " + R)
+      println("G_A: " + G)
+      println("B_A: " + B)
     }
   }
 
@@ -148,6 +154,11 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
     color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
   }
 
+  override def clone(): Pixel = {
+    val cloned_pixel = new Pixel(x, y, R, G, B, A)
+    cloned_pixel
+  }
+
   def median_filter(matrix: ArrayBuffer[Pixel], N: Int, width: Int, height: Int) = {
     val list: ListBuffer[Pixel] = ListBuffer()
 
@@ -218,6 +229,7 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
   }
 
   def execute_methods() = {
+
     op_sequence.foreach(o => {
       o.func(o.args._1, o.args._2, o.args._3)
     })
