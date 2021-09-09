@@ -5,6 +5,7 @@ import misc.{ImageInfo, MethodInfo, Pixel, SelectionInfo}
 import java.awt.{GridLayout, Rectangle}
 import java.awt.event.{ActionEvent, ActionListener}
 import javax.swing.{JButton, JDialog, JFrame, JPanel, JTextField}
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, selections: ListBuffer[SelectionInfo] = null) extends JDialog(owner, true) {
@@ -49,6 +50,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
               i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.+ , (r, g, b)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+              val changed_pixels = new mutable.HashMap[String, Pixel]()
               selections.foreach(s => {
                 s.rectangles.foreach(ri => {
                   val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
@@ -68,10 +70,13 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
                     ri.changed_pixels.clear()
                     i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
-                      p.op_sequence += new MethodInfo(p.+ , (r, g, b))
-                      val cp = p.clone()
-                      cp.op_sequence += new MethodInfo(cp.+ , (r, g, b))
-                      ri.changed_pixels += cp
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.op_sequence += new MethodInfo(p.+ , (r, g, b))
+                        val cp = p.clone()
+                        cp.op_sequence += new MethodInfo(cp.+ , (r, g, b))
+                        ri.changed_pixels += cp
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
+                      }
                     })
                   }
                 })
@@ -94,6 +99,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
               i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.- , (r, g, b)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+              val changed_pixels = new mutable.HashMap[String, Pixel]()
               selections.foreach(s => {
                 s.rectangles.foreach(ri => {
                   val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
@@ -113,10 +119,13 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
                     ri.changed_pixels.clear()
                     i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
-                      p.op_sequence += new MethodInfo(p.- , (r, g, b))
-                      val cp = p.clone()
-                      cp.op_sequence += new MethodInfo(cp.- , (r, g, b))
-                      ri.changed_pixels += cp
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.op_sequence += new MethodInfo(p.- , (r, g, b))
+                        val cp = p.clone()
+                        cp.op_sequence += new MethodInfo(cp.- , (r, g, b))
+                        ri.changed_pixels += cp
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
+                      }
                     })
                   }
                 })
@@ -138,6 +147,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
               i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.:- , (r, g, b)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+              val changed_pixels = new mutable.HashMap[String, Pixel]()
               selections.foreach(s => {
                 s.rectangles.foreach(ri => {
                   val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
@@ -157,10 +167,13 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
                     ri.changed_pixels.clear()
                     i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
-                      p.op_sequence += new MethodInfo(p.:- , (r, g, b))
-                      val cp = p.clone()
-                      cp.op_sequence += new MethodInfo(cp.:- , (r, g, b))
-                      ri.changed_pixels += cp
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.op_sequence += new MethodInfo(p.:- , (r, g, b))
+                        val cp = p.clone()
+                        cp.op_sequence += new MethodInfo(cp.:- , (r, g, b))
+                        ri.changed_pixels += cp
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
+                      }
                     })
                   }
                 })
@@ -182,6 +195,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
               i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.* , (r, g, b)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+              val changed_pixels = new mutable.HashMap[String, Pixel]()
               selections.foreach(s => {
                 s.rectangles.foreach(ri => {
                   val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
@@ -201,10 +215,13 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
                     ri.changed_pixels.clear()
                     i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
-                      p.op_sequence += new MethodInfo(p.* , (r, g, b))
-                      val cp = p.clone()
-                      cp.op_sequence += new MethodInfo(cp.* , (r, g, b))
-                      ri.changed_pixels += cp
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.op_sequence += new MethodInfo(p.* , (r, g, b))
+                        val cp = p.clone()
+                        cp.op_sequence += new MethodInfo(cp.* , (r, g, b))
+                        ri.changed_pixels += cp
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
+                      }
                     })
                   }
                 })
@@ -226,6 +243,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
               i.pixels.foreach(p => p.op_sequence += new MethodInfo(p./ , (r, g, b)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+              val changed_pixels = new mutable.HashMap[String, Pixel]()
               selections.foreach(s => {
                 s.rectangles.foreach(ri => {
                   val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
@@ -245,10 +263,13 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
                     ri.changed_pixels.clear()
                     i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
-                      p.op_sequence += new MethodInfo(p./ , (r, g, b))
-                      val cp = p.clone()
-                      cp.op_sequence += new MethodInfo(cp./ , (r, g, b))
-                      ri.changed_pixels += cp
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.op_sequence += new MethodInfo(p./ , (r, g, b))
+                        val cp = p.clone()
+                        cp.op_sequence += new MethodInfo(cp./ , (r, g, b))
+                        ri.changed_pixels += cp
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
+                      }
                     })
                   }
                 })
@@ -270,6 +291,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
               i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.:/ , (r, g, b)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+              val changed_pixels = new mutable.HashMap[String, Pixel]()
               selections.foreach(s => {
                 s.rectangles.foreach(ri => {
                   val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
@@ -289,10 +311,13 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
                     ri.changed_pixels.clear()
                     i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
-                      p.op_sequence += new MethodInfo(p.:/ , (r, g, b))
-                      val cp = p.clone()
-                      cp.op_sequence += new MethodInfo(cp.:/ , (r, g, b))
-                      ri.changed_pixels += cp
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.op_sequence += new MethodInfo(p.:/ , (r, g, b))
+                        val cp = p.clone()
+                        cp.op_sequence += new MethodInfo(cp.:/ , (r, g, b))
+                        ri.changed_pixels += cp
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
+                      }
                     })
                   }
                 })
@@ -314,6 +339,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
               i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.power , (r, g, b)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+              val changed_pixels = new mutable.HashMap[String, Pixel]()
               selections.foreach(s => {
                 s.rectangles.foreach(ri => {
                   val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
@@ -333,10 +359,13 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
                     ri.changed_pixels.clear()
                     i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
-                      p.op_sequence += new MethodInfo(p.power , (r, g, b))
-                      val cp = p.clone()
-                      cp.op_sequence += new MethodInfo(cp.power , (r, g, b))
-                      ri.changed_pixels += cp
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.op_sequence += new MethodInfo(p.power , (r, g, b))
+                        val cp = p.clone()
+                        cp.op_sequence += new MethodInfo(cp.power , (r, g, b))
+                        ri.changed_pixels += cp
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
+                      }
                     })
                   }
                 })
@@ -358,6 +387,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
               i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.log , (r, g, b)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+              val changed_pixels = new mutable.HashMap[String, Pixel]()
               selections.foreach(s => {
                 s.rectangles.foreach(ri => {
                   val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
@@ -381,6 +411,13 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                       val cp = p.clone()
                       cp.op_sequence += new MethodInfo(cp.log , (r, g, b))
                       ri.changed_pixels += cp
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.op_sequence += new MethodInfo(p.log , (r, g, b))
+                        val cp = p.clone()
+                        cp.op_sequence += new MethodInfo(cp.log , (r, g, b))
+                        ri.changed_pixels += cp
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
+                      }
                     })
                   }
                 })
@@ -402,6 +439,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
               i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.abs , (r, g, b)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+              val changed_pixels = new mutable.HashMap[String, Pixel]()
               selections.foreach(s => {
                 s.rectangles.foreach(ri => {
                   val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
@@ -421,10 +459,13 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
                     ri.changed_pixels.clear()
                     i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
-                      p.op_sequence += new MethodInfo(p.abs , (r, g, b))
-                      val cp = p.clone()
-                      cp.op_sequence += new MethodInfo(cp.abs , (r, g, b))
-                      ri.changed_pixels += cp
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.op_sequence += new MethodInfo(p.abs , (r, g, b))
+                        val cp = p.clone()
+                        cp.op_sequence += new MethodInfo(cp.abs , (r, g, b))
+                        ri.changed_pixels += cp
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
+                      }
                     })
                   }
                 })
@@ -446,6 +487,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
               i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.min , (r, g, b)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+              val changed_pixels = new mutable.HashMap[String, Pixel]()
               selections.foreach(s => {
                 s.rectangles.foreach(ri => {
                   val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
@@ -465,10 +507,13 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
                     ri.changed_pixels.clear()
                     i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
-                      p.op_sequence += new MethodInfo(p.min , (r, g, b))
-                      val cp = p.clone()
-                      cp.op_sequence += new MethodInfo(cp.min , (r, g, b))
-                      ri.changed_pixels += cp
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.op_sequence += new MethodInfo(p.min , (r, g, b))
+                        val cp = p.clone()
+                        cp.op_sequence += new MethodInfo(cp.min , (r, g, b))
+                        ri.changed_pixels += cp
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
+                      }
                     })
                   }
                 })
@@ -490,6 +535,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
               i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.max , (r, g, b)))
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+              val changed_pixels = new mutable.HashMap[String, Pixel]()
               selections.foreach(s => {
                 s.rectangles.foreach(ri => {
                   val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
@@ -509,10 +555,13 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
                     ri.changed_pixels.clear()
                     i.pixels.foreach(p => if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
-                      p.op_sequence += new MethodInfo(p.max , (r, g, b))
-                      val cp = p.clone()
-                      cp.op_sequence += new MethodInfo(cp.max , (r, g, b))
-                      ri.changed_pixels += cp
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.op_sequence += new MethodInfo(p.max , (r, g, b))
+                        val cp = p.clone()
+                        cp.op_sequence += new MethodInfo(cp.max , (r, g, b))
+                        ri.changed_pixels += cp
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
+                      }
                     })
                   }
                 })

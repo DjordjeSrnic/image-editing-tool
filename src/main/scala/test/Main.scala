@@ -8,6 +8,7 @@ import misc._
 
 import java.io.File
 import javax.imageio.ImageIO
+import scala.collection.mutable
 import scala.collection.mutable._
 import scala.collection.parallel.CollectionConverters._
 
@@ -171,6 +172,7 @@ object Main extends App {
             image_list.par.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+                val changed_pixels = new mutable.HashMap[String, Pixel]()
                 selectedSelection.rectangles.foreach(ri => {
                   val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
                   if (temp_rect.intersects(r)) {
@@ -188,8 +190,11 @@ object Main extends App {
 
                     i.pixels.foreach(p => {
                       if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
-                        p.grayscale()
-                        ri.changed_pixels += p.clone()
+                        if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                          p.grayscale()
+                          changed_pixels.addOne(p.x + "-" + p.y, p.clone())
+                          ri.changed_pixels += p.clone()
+                        }
                       }
                     })
                   }
@@ -216,6 +221,7 @@ object Main extends App {
             image_list.par.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+                val changed_pixels = new mutable.HashMap[String, Pixel]()
                 selectedSelection.rectangles.foreach(ri => {
                   val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
                   if (temp_rect.intersects(r)) {
@@ -233,8 +239,11 @@ object Main extends App {
 
                     i.pixels.foreach(p => {
                       if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
-                        p.negative()
-                        ri.changed_pixels += p.clone()
+                        if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                          p.negative()
+                          changed_pixels.addOne(p.x + "-" + p.y, p.clone())
+                          ri.changed_pixels += p.clone()
+                        }
                       }
                     })
                   }
@@ -265,6 +274,7 @@ object Main extends App {
             image_list.par.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+                val changed_pixels = new mutable.HashMap[String, Pixel]()
                 selectedSelection.rectangles.par.foreach(ri => {
                   val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
                   if (temp_rect.intersects(r)) {
@@ -283,8 +293,11 @@ object Main extends App {
 
                     i.pixels.foreach(p => {
                       if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
-                        p.median_filter(i.pixels, N, i.image.getWidth, i.image.getHeight)
-                        ri.changed_pixels += p.clone()
+                        if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                          p.median_filter(i.pixels, N, i.image.getWidth, i.image.getHeight)
+                          changed_pixels.addOne(p.x + "-" + p.y, p.clone())
+                          ri.changed_pixels += p.clone()
+                        }
                       }
                     })
                   }
@@ -322,6 +335,7 @@ object Main extends App {
             image_list.par.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
+                val changed_pixels = new mutable.HashMap[String, Pixel]()
                 selectedSelection.rectangles.par.foreach(ri => {
                   val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
                   if (temp_rect.intersects(r)) {
@@ -340,8 +354,11 @@ object Main extends App {
 
                     i.pixels.foreach(p => {
                       if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
-                        p.weighted_filter(i.pixels, weights, N, i.image.getWidth, i.image.getHeight)
-                        ri.changed_pixels += p.clone()
+                        if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                          p.weighted_filter(i.pixels, weights, N, i.image.getWidth, i.image.getHeight)
+                          changed_pixels.addOne(p.x + "-" + p.y, p.clone())
+                          ri.changed_pixels += p.clone()
+                        }
                       }
                     })
                   }
@@ -361,7 +378,6 @@ object Main extends App {
             val calculator_dialog: PixelCalculatorDialog = new PixelCalculatorDialog(image_list, frame)
             calculator_dialog.setVisible(true)
           } else {
-            println("SSSSSSSSSSSSSSSSSSS")
             val calculator_dialog: PixelCalculatorDialog = new PixelCalculatorDialog(image_list, frame, selection_list)
             calculator_dialog.setVisible(true)
           }
@@ -536,7 +552,10 @@ object Main extends App {
               try {
                 selectedValue.active = !selectedValue.active
                 image_list.foreach(i => {
-                  i.pixels = i.orig_pixels.clone()
+                  i.pixels.clear()
+                  i.orig_pixels.foreach(op => {
+                    i.pixels += op.clone()
+                  })
                   selection_list.foreach(s => {
                     if (s.active) {
                       s.rectangles.foreach(r => {
