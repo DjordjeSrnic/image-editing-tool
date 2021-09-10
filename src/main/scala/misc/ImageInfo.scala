@@ -1,6 +1,5 @@
 package misc
 
-import java.awt.Color
 import java.awt.image.BufferedImage
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
@@ -8,24 +7,8 @@ class ImageInfo(val name: String, var image: BufferedImage, val layer: Int, var 
   var pixels: ArrayBuffer[Pixel] = new ArrayBuffer()
   var orig_pixels: ArrayBuffer[Pixel] = new ArrayBuffer()
 
-  def copy(): ImageInfo = {
-    new ImageInfo(name, deepCopy(image), layer, opacity, active)
-  }
-
-  import java.awt.image.BufferedImage
-  import java.awt.image.ColorModel
-  import java.awt.image.WritableRaster
-
-  private def deepCopy(bi: BufferedImage): BufferedImage = {
-    val cm = bi.getColorModel
-    val isAlphaPremultiplied = cm.isAlphaPremultiplied
-    val raster = bi.copyData(null)
-    new BufferedImage(cm, raster, isAlphaPremultiplied, null)
-  }
-
   def update_image() = {
     image.setRGB(0, 0, image.getWidth, image.getHeight, pixels.map(_.color_value).toArray, 0, image.getWidth)
-    //image = Layering.makeImageTranslucent(image, opacity)
   }
 
   def init() = {

@@ -15,15 +15,9 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
 
   def + (const: (Double, Double, Double)) = const match {
     case (d_r, d_g, d_b) => {
-      println("R: " + R)
-      println("G: " + G)
-      println("B: " + B)
       this.R = this.R + d_r
       this.G = this.G + d_g
       this.B = this.B + d_b
-      println("R_A: " + R)
-      println("G_A: " + G)
-      println("B_A: " + B)
     }
   }
 
@@ -162,7 +156,6 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
   def median_filter(matrix: ArrayBuffer[Pixel], N: Int, width: Int, height: Int) = {
     val list: ListBuffer[Pixel] = ListBuffer()
 
-    val t1 = System.nanoTime()
     val start_i = if (y - N < 0) 0 else y - N
     val start_j = if (x - N < 0) 0 else x - N
     val end_i = if (y + N >= height) height - 1 else y + N
@@ -196,11 +189,6 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
     this.G = median._2
     this.B = median._3
     color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
-    val t2 = System.nanoTime()
-    if (cnt == 0) {
-      println("ELAPSED TIME: " + (t2-t1) + "ns")
-      cnt += 1
-    }
   }
 
   def weighted_filter(matrix: ArrayBuffer[Pixel], weight_matrix: Array[Double], N: Int, width: Int, height: Int): Unit = {

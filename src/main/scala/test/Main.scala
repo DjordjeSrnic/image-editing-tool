@@ -158,16 +158,19 @@ object Main extends App {
     val to_median_filter = new JMenuItem("To Median Filter")
     val to_weighted_median_filter = new JMenuItem("To Weighted Median Filter")
     val calculator = new JMenuItem("Open Calculator")
+    val to_original = new JMenuItem("Revert Changes")
     to_grayscale.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
-          if (selectedSelection.rectangles.isEmpty) {
+          if (selectedSelection == null) {
             image_list.par.foreach(i => {
               if (i.active) {
                 i.pixels.par.foreach(p => p.grayscale())
                 i.update_image()
               }
             })
+            test_pane.changed = true
+            test_pane.repaint()
           } else {
             image_list.par.foreach(i => {
               if (i.active) {
@@ -188,15 +191,15 @@ object Main extends App {
                     else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
                     else r.getHeight
 
-                    i.pixels.foreach(p => {
-                      if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
+                    for(ind_i <- y until y + height.toInt)
+                      for(ind_j <- x until x + width.toInt) {
+                        val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
                           p.grayscale()
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                           ri.changed_pixels += p.clone()
                         }
                       }
-                    })
                   }
                 })
               }
@@ -210,13 +213,15 @@ object Main extends App {
     to_negative.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
-          if (selectedSelection.rectangles.isEmpty) {
+          if (selectedSelection == null) {
             image_list.par.foreach(i => {
               if (i.active) {
-                i.pixels.par.foreach(p => p.negative())
+                i.pixels.foreach(p => p.negative())
                 i.update_image()
               }
             })
+            test_pane.changed = true
+            test_pane.repaint()
           } else {
             image_list.par.foreach(i => {
               if (i.active) {
@@ -237,22 +242,22 @@ object Main extends App {
                     else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
                     else r.getHeight
 
-                    i.pixels.foreach(p => {
-                      if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
+                    for(ind_i <- y until y + height.toInt)
+                      for(ind_j <- x until x + width.toInt) {
+                        val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
                           p.negative()
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                           ri.changed_pixels += p.clone()
                         }
                       }
-                    })
                   }
                 })
               }
             })
           }
         } catch {
-          case e: Exception => println("Error while applying negative.")
+          case e: Exception => println(e.getMessage)
         }
       }
     })
@@ -263,13 +268,15 @@ object Main extends App {
         val N = dialog.N
 
         try {
-          if (selectedSelection == null || selectedSelection.rectangles.isEmpty) {
+          if (selectedSelection == null) {
             image_list.par.foreach(i => {
               if (i.active) {
                 i.pixels.foreach(p => p.median_filter(i.pixels, N, i.image.getWidth, i.image.getHeight))
                 i.update_image()
               }
             })
+            test_pane.changed = true
+            test_pane.repaint()
           } else {
             image_list.par.foreach(i => {
               if (i.active) {
@@ -291,15 +298,15 @@ object Main extends App {
                     else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
                     else r.getHeight
 
-                    i.pixels.foreach(p => {
-                      if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
+                    for(ind_i <- y until y + height.toInt)
+                      for(ind_j <- x until x + width.toInt) {
+                        val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
                           p.median_filter(i.pixels, N, i.image.getWidth, i.image.getHeight)
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                           ri.changed_pixels += p.clone()
                         }
                       }
-                    })
                   }
                 })
               }
@@ -324,13 +331,15 @@ object Main extends App {
         val weights = matrix_dialog.matrix.clone().toArray
 
         try {
-          if (selectedSelection == null || selectedSelection.rectangles.isEmpty) {
+          if (selectedSelection == null) {
             image_list.par.foreach(i => {
               if (i.active) {
                 i.pixels.foreach(p => p.weighted_filter(i.pixels, weights, N, i.image.getWidth, i.image.getHeight))
                 i.update_image()
               }
             })
+            test_pane.changed = true
+            test_pane.repaint()
           } else {
             image_list.par.foreach(i => {
               if (i.active) {
@@ -352,15 +361,15 @@ object Main extends App {
                     else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
                     else r.getHeight
 
-                    i.pixels.foreach(p => {
-                      if (p.x >= x && p.x < (x + width.toInt) && p.y >= y && p.y < (y + height.toInt)) {
+                    for(ind_i <- y until y + height.toInt)
+                      for(ind_j <- x until x + width.toInt) {
+                        val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
                           p.weighted_filter(i.pixels, weights, N, i.image.getWidth, i.image.getHeight)
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                           ri.changed_pixels += p.clone()
                         }
                       }
-                    })
                   }
                 })
               }
@@ -374,9 +383,11 @@ object Main extends App {
     calculator.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
-          if (selectedSelection == null || selectedSelection.rectangles.isEmpty) {
+          if (selectedSelection == null) {
             val calculator_dialog: PixelCalculatorDialog = new PixelCalculatorDialog(image_list, frame)
             calculator_dialog.setVisible(true)
+            test_pane.changed = true
+            test_pane.repaint()
           } else {
             val calculator_dialog: PixelCalculatorDialog = new PixelCalculatorDialog(image_list, frame, selection_list)
             calculator_dialog.setVisible(true)
@@ -386,11 +397,37 @@ object Main extends App {
         }
       }
     })
+    to_original.addActionListener(new ActionListener {
+      override def actionPerformed(e: ActionEvent): Unit = {
+        try {
+          image_list.foreach(i => {
+            i.pixels.clear()
+            i.orig_pixels.foreach(op => {
+              i.pixels += op.clone()
+            })
+            i.update_image()
+          })
+
+          selection_list.foreach(s => {
+            if (s.active) {
+              s.active = false
+            }
+          })
+
+          test_pane.changed = true
+          test_pane.repaint()
+        } catch {
+          case e: Exception => println("Error while applying calculator.")
+        }
+      }
+    })
+
     edit_menu.add(to_grayscale)
     edit_menu.add(to_negative)
     edit_menu.add(to_median_filter)
     edit_menu.add(to_weighted_median_filter)
     edit_menu.add(calculator)
+    edit_menu.add(to_original)
 
     menu_bar.add(file_menu)
     menu_bar.add(options_menu)
@@ -526,6 +563,8 @@ object Main extends App {
             def actionPerformed(e: ActionEvent): Unit = {
               try {
                 selection_list = selection_list.filter(_.name != selectedValue.name)
+                selection_listbox.setListData(selection_list.map(_.name).toArray)
+                selection_listbox.repaint()
                 image_list.foreach(i => {
                   i.pixels = i.orig_pixels.clone()
                   selection_list.foreach(s => {
