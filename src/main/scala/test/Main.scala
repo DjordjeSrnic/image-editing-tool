@@ -158,6 +158,7 @@ object Main extends App {
     val to_median_filter = new JMenuItem("To Median Filter")
     val to_weighted_median_filter = new JMenuItem("To Weighted Median Filter")
     val calculator = new JMenuItem("Open Calculator")
+    val composition_calculator = new JMenuItem("Open Composition Calculator")
     val to_original = new JMenuItem("Revert Changes")
     to_grayscale.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
@@ -397,6 +398,23 @@ object Main extends App {
         }
       }
     })
+    composition_calculator.addActionListener(new ActionListener {
+      override def actionPerformed(e: ActionEvent): Unit = {
+        try {
+          if (selectedSelection == null) {
+            val calculator_dialog: CompositionPixelCalculatorDialog = new CompositionPixelCalculatorDialog(image_list, frame)
+            calculator_dialog.setVisible(true)
+            test_pane.changed = true
+            test_pane.repaint()
+          } else {
+            val calculator_dialog: CompositionPixelCalculatorDialog = new CompositionPixelCalculatorDialog(image_list, frame, selection_list)
+            calculator_dialog.setVisible(true)
+          }
+        } catch {
+          case e: Exception => println("Error while applying composition calculator.")
+        }
+      }
+    })
     to_original.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
@@ -427,6 +445,7 @@ object Main extends App {
     edit_menu.add(to_median_filter)
     edit_menu.add(to_weighted_median_filter)
     edit_menu.add(calculator)
+    edit_menu.add(composition_calculator)
     edit_menu.add(to_original)
 
     menu_bar.add(file_menu)

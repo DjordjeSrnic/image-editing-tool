@@ -1,6 +1,6 @@
 package gui
 
-import misc.{ImageInfo, MethodInfo, Pixel, SelectionInfo}
+import misc.{ImageInfo, MethodInfo, Pixel, PixelWrapper, SelectionInfo}
 
 import java.awt.{GridLayout, Rectangle}
 import java.awt.event.{ActionEvent, ActionListener}
@@ -8,10 +8,10 @@ import javax.swing.{JButton, JDialog, JFrame, JPanel, JTextField}
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, selections: ListBuffer[SelectionInfo] = null) extends JDialog(owner, true) {
+class CompositionPixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, selections: ListBuffer[SelectionInfo] = null) extends JDialog(owner, true) {
 
   private def init(): Unit = {
-    setTitle("Pixel Calculator")
+    setTitle("Composition Calculator")
     setAlwaysOnTop(true)
     setVisible(false)
     setBounds(500, 400, 800, 300)
@@ -40,14 +40,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     add.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
-
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.+ , (r, g, b)))
+              i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.+)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
@@ -73,7 +69,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.op_sequence += new MethodInfo(p.+ , (r, g, b))
+                          p.wrapper.comp_sequence += p.wrapper.+
                           val cp = p.clone()
                           ri.changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
@@ -90,14 +86,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     sub.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
-
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.- , (r, g, b)))
+              i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.-)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
@@ -123,7 +115,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.op_sequence += new MethodInfo(p.- , (r, g, b))
+                          p.wrapper.comp_sequence += p.wrapper.-
                           val cp = p.clone()
                           ri.changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
@@ -140,13 +132,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     inv_sub.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.:- , (r, g, b)))
+              i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.:-)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
@@ -172,7 +161,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.op_sequence += new MethodInfo(p.:- , (r, g, b))
+                          p.wrapper.comp_sequence += p.wrapper.:-
                           val cp = p.clone()
                           ri.changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
@@ -189,13 +178,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     mul.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.* , (r, g, b)))
+              i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.*)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
@@ -221,7 +207,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.op_sequence += new MethodInfo(p.* , (r, g, b))
+                          p.wrapper.comp_sequence += p.wrapper.*
                           val cp = p.clone()
                           ri.changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
@@ -238,13 +224,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     div.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p./ , (r, g, b)))
+              i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper./)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
@@ -270,7 +253,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.op_sequence += new MethodInfo(p./ , (r, g, b))
+                          p.wrapper.comp_sequence += p.wrapper./
                           val cp = p.clone()
                           ri.changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
@@ -287,13 +270,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     inv_div.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.:/ , (r, g, b)))
+              i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.:/)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
@@ -319,7 +299,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.op_sequence += new MethodInfo(p.:/ , (r, g, b))
+                          p.wrapper.comp_sequence += p.wrapper.:/
                           val cp = p.clone()
                           ri.changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
@@ -336,13 +316,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     power.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.power , (r, g, b)))
+              i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.power)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
@@ -368,7 +345,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.op_sequence += new MethodInfo(p.power , (r, g, b))
+                          p.wrapper.comp_sequence += p.wrapper.power
                           val cp = p.clone()
                           ri.changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
@@ -385,13 +362,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     log.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.log , (r, g, b)))
+              i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.log)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
@@ -417,7 +391,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.op_sequence += new MethodInfo(p.log , (r, g, b))
+                          p.wrapper.comp_sequence += p.wrapper.log
                           val cp = p.clone()
                           ri.changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
@@ -434,13 +408,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     abs.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.abs , (r, g, b)))
+              i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.abs)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
@@ -466,7 +437,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.op_sequence += new MethodInfo(p.abs , (r, g, b))
+                          p.wrapper.comp_sequence += p.wrapper.abs
                           val cp = p.clone()
                           ri.changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
@@ -483,13 +454,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     min.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.min , (r, g, b)))
+              i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.min)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
@@ -515,7 +483,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.op_sequence += new MethodInfo(p.min , (r, g, b))
+                          p.wrapper.comp_sequence += p.wrapper.min
                           val cp = p.clone()
                           ri.changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
@@ -532,13 +500,10 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     max.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
-              i.pixels.foreach(p => p.op_sequence += new MethodInfo(p.max , (r, g, b)))
+              i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.max)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
@@ -564,7 +529,7 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.op_sequence += new MethodInfo(p.max , (r, g, b))
+                          p.wrapper.comp_sequence += p.wrapper.max
                           val cp = p.clone()
                           ri.changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
@@ -597,22 +562,28 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     finish.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        images.foreach(i => {
-          if (i.active) {
-            i.pixels.foreach(p => {
-              p.execute_methods()
-            })
-            i.update_image()
-          }
-        })
+        val R = java.lang.Double.parseDouble(r_text.getText)
+        val G = java.lang.Double.parseDouble(g_text.getText)
+        val B = java.lang.Double.parseDouble(b_text.getText)
 
-        selections.foreach(s => {
-          s.rectangles.foreach(r => {
-            r.changed_pixels.foreach(p => {
-              p.execute_methods()
+        if (selections == null) {
+          images.foreach(i => {
+            if (i.active) {
+              i.pixels.foreach(p => {
+                p.wrapper.composite(R, G, B)
+              })
+              i.update_image()
+            }
+          })
+        } else {
+          selections.foreach(s => {
+            s.rectangles.foreach(r => {
+              r.changed_pixels.foreach(p => {
+                p.wrapper.composite(R, G, B)
+              })
             })
           })
-        })
+        }
         dispose()
       }
     })

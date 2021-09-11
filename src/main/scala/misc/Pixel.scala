@@ -4,14 +4,12 @@ import misc.Pixel.max_pixel_value
 
 import java.awt.Color
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-import scala.collection.parallel.CollectionConverters._
 
 class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double, var A: Double) {
 
+  val wrapper = new PixelWrapper(this)
   var op_sequence: ListBuffer[MethodInfo] = new ListBuffer[MethodInfo]()
-  var comp_sequence: ListBuffer[MethodInfo] = new ListBuffer[MethodInfo]()
   var color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
-  var cnt = 0
 
   def + (const: (Double, Double, Double)) = const match {
     case (d_r, d_g, d_b) => {
@@ -114,25 +112,6 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
     color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
   }
 
-  def composite(x: (Double, Double, Double)) = {
-    var v = x
-    comp_sequence.reverse.foreach(o => {
-      o.func(v._1, v._2, v._3)
-      v = (R, G, B)
-    })
-
-    if (R < 0 || R > 1.0)
-      R = 1.0
-
-    if (G < 0 || G > 1.0)
-      G = 1.0
-
-    if (B < 0 || B > 1.0)
-      B = 1.0
-
-    color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
-  }
-
   def negative() = {
     this.R = 1 - this.R
     this.G = 1 - this.G
@@ -217,7 +196,6 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
   }
 
   def execute_methods() = {
-
     op_sequence.foreach(o => {
       o.func(o.args._1, o.args._2, o.args._3)
     })
@@ -237,5 +215,4 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
 
 object Pixel {
   var max_pixel_value: Double = 0
-
 }
