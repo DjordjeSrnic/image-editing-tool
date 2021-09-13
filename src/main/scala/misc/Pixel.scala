@@ -132,72 +132,86 @@ class Pixel(val x: Int, val y: Int, var R: Double, var G: Double, var B: Double,
     cloned_pixel
   }
 
-  def median_filter(matrix: ArrayBuffer[Pixel], N: Int, width: Int, height: Int) = {
-    val list: ListBuffer[Pixel] = ListBuffer()
+  def median_filter(matrix: ArrayBuffer[Pixel]) = {
+    (N: Int) => {
+      (width: Int) => {
+        (height: Int) => {
+          val list: ListBuffer[Pixel] = ListBuffer()
 
-    val start_i = if (y - N < 0) 0 else y - N
-    val start_j = if (x - N < 0) 0 else x - N
-    val end_i = if (y + N >= height) height - 1 else y + N
-    val end_j = if (x + N >= width) width - 1 else x + N
+          val start_i = if (y - N < 0) 0 else y - N
+          val start_j = if (x - N < 0) 0 else x - N
+          val end_i = if (y + N >= height) height - 1 else y + N
+          val end_j = if (x + N >= width) width - 1 else x + N
 
-    for(i <- start_i to end_i)
-      for(j <- start_j to end_j) {
-        list += matrix(i*width + j)
+          for(i <- start_i to end_i)
+            for(j <- start_j to end_j) {
+              list += matrix(i*width + j)
+            }
+
+          val lR = list.sortBy(p => p.R)
+          val lG = list.sortBy(p => p.G)
+          val lB = list.sortBy(p => p.B)
+          val len: Int = list.length
+
+          val median = if (len % 2 == 0) {
+            val r: Double = (lR(len/2).R + lR(len/2 - 1).R) / 2
+            val g: Double = (lG(len/2).G + lG(len/2 - 1).G) / 2
+            val b: Double = (lB(len/2).B + lB(len/2 - 1).B) / 2
+
+            (r, g, b)
+          } else {
+            val r: Double = lR((len-1)/2).R
+            val g: Double = lG((len-1)/2).G
+            val b: Double = lB((len-1)/2).B
+
+            (r, g, b)
+          }
+
+          this.R = median._1
+          this.G = median._2
+          this.B = median._3
+          color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
+        }
       }
-
-    val lR = list.sortBy(p => p.R)
-    val lG = list.sortBy(p => p.G)
-    val lB = list.sortBy(p => p.B)
-    val len: Int = list.length
-
-    val median = if (len % 2 == 0) {
-      val r: Double = (lR(len/2).R + lR(len/2 - 1).R) / 2
-      val g: Double = (lG(len/2).G + lG(len/2 - 1).G) / 2
-      val b: Double = (lB(len/2).B + lB(len/2 - 1).B) / 2
-
-      (r, g, b)
-    } else {
-      val r: Double = lR((len-1)/2).R
-      val g: Double = lG((len-1)/2).G
-      val b: Double = lB((len-1)/2).B
-
-      (r, g, b)
     }
-
-    this.R = median._1
-    this.G = median._2
-    this.B = median._3
-    color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
   }
 
-  def weighted_filter(matrix: ArrayBuffer[Pixel], weight_matrix: Array[Double], N: Int, width: Int, height: Int): Unit = {
-    var cnt = 0
-    var sumR: Double = 0
-    var sumG: Double = 0
-    var sumB: Double = 0
+  def weighted_filter(matrix: ArrayBuffer[Pixel]) = {
+    (weight_matrix: Array[Double]) => {
+      (N: Int) => {
+        (width: Int) => {
+          (height: Int) => {
+            var cnt = 0
+            var sumR: Double = 0
+            var sumG: Double = 0
+            var sumB: Double = 0
 
-    val start_i = if (y - N < 0) 0 else y - N
-    val start_j = if (x - N < 0) 0 else x - N
-    val end_i = if (y + N >= height) height - 1 else y + N
-    val end_j = if (x + N >= width) width - 1 else x + N
+            val start_i = if (y - N < 0) 0 else y - N
+            val start_j = if (x - N < 0) 0 else x - N
+            val end_i = if (y + N >= height) height - 1 else y + N
+            val end_j = if (x + N >= width) width - 1 else x + N
 
-    for(i <- start_i to end_i)
-      for(j <- start_j to end_j) {
-        sumR += weight_matrix(cnt) * matrix(i*width + j).R
-        sumG += weight_matrix(cnt) * matrix(i*width + j).G
-        sumB += weight_matrix(cnt) * matrix(i*width + j).B
-        cnt += 1
+            for(i <- start_i to end_i)
+              for(j <- start_j to end_j) {
+                sumR += weight_matrix(cnt) * matrix(i*width + j).R
+                sumG += weight_matrix(cnt) * matrix(i*width + j).G
+                sumB += weight_matrix(cnt) * matrix(i*width + j).B
+                cnt += 1
+              }
+
+            this.R = sumR / cnt
+            this.G = sumG / cnt
+            this.B = sumB / cnt
+            color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
+          }
+        }
       }
-
-    this.R = sumR / cnt
-    this.G = sumG / cnt
-    this.B = sumB / cnt
-    color_value = new Color((R*255).toInt, (G*255).toInt, (B*255).toInt, (A*255).toInt).getRGB
+    }
   }
 
   def execute_methods() = {
     op_sequence.foreach(o => {
-      o.func(o.args._1, o.args._2, o.args._3)
+      o.func(o.args)
     })
 
     if (R < 0 || R > 1.0)

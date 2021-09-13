@@ -94,7 +94,7 @@ class ImportProjectDialog(owner: JFrame) extends JDialog(owner, true) {
             val G = rect_str(3).toDouble
             val B = rect_str(4).toDouble
             val A = rect_str(5).toDouble
-            curRectangle.changed_pixels += new Pixel(x, y, R, G, B, A)
+            //curRectangle.changed_pixels += new Pixel(x, y, R, G, B, A)
           }
 
           if (curLine == "pixel-end") {

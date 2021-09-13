@@ -4,9 +4,9 @@ import misc.{ImageInfo, MethodInfo, Pixel, SelectionInfo}
 
 import java.awt.{GridLayout, Rectangle}
 import java.awt.event.{ActionEvent, ActionListener}
-import javax.swing.{JButton, JDialog, JFrame, JPanel, JTextField}
+import javax.swing.{JButton, JDialog, JFrame, JPanel, JSpinner, JTextField, SpinnerNumberModel}
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, selections: ListBuffer[SelectionInfo] = null) extends JDialog(owner, true) {
 
@@ -31,19 +31,19 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
     val max = new JButton("max")
 
     val rgb_panel = new JPanel(new GridLayout(1, 4))
-    val r_text = new JTextField("0.0")
-    val g_text = new JTextField("0.0")
-    val b_text = new JTextField("0.0")
+    val r_text = new JSpinner(new SpinnerNumberModel(0.0, 0.0, 1.0, 0.1))
+    val g_text = new JSpinner(new SpinnerNumberModel(0.0, 0.0, 1.0, 0.1))
+    val b_text = new JSpinner(new SpinnerNumberModel(0.0, 0.0, 1.0, 0.1))
 
-    val add_op = new JButton("Add Operation")
     val finish = new JButton("Finish")
 
     add.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
+        val r = java.lang.Double.parseDouble(r_text.getValue + "")
+        val g = java.lang.Double.parseDouble(g_text.getValue + "")
+        val b = java.lang.Double.parseDouble(b_text.getValue + "")
 
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
@@ -68,32 +68,34 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                     else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                     else nr.getHeight
 
-                    ri.changed_pixels.clear()
+                    val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
                     for(ind_i <- y until y + height.toInt)
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
                           p.op_sequence += new MethodInfo(p.+ , (r, g, b))
-                          val cp = p.clone()
-                          ri.changed_pixels += p
+                          rect_changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                         }
                       }
+                    ri.changed_pixels(cnt) = rect_changed_pixels
                   }
                 })
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     sub.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
+        val r = java.lang.Double.parseDouble(r_text.getValue + "")
+        val g = java.lang.Double.parseDouble(g_text.getValue + "")
+        val b = java.lang.Double.parseDouble(b_text.getValue + "")
 
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
@@ -118,31 +120,34 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                     else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                     else nr.getHeight
 
-                    ri.changed_pixels.clear()
+                    val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
                     for(ind_i <- y until y + height.toInt)
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
                           p.op_sequence += new MethodInfo(p.- , (r, g, b))
-                          val cp = p.clone()
-                          ri.changed_pixels += p
+                          rect_changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                         }
                       }
+                    ri.changed_pixels(cnt) = rect_changed_pixels
                   }
                 })
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     inv_sub.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
+        val r = java.lang.Double.parseDouble(r_text.getValue + "")
+        val g = java.lang.Double.parseDouble(g_text.getValue + "")
+        val b = java.lang.Double.parseDouble(b_text.getValue + "")
+
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
@@ -167,31 +172,34 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                     else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                     else nr.getHeight
 
-                    ri.changed_pixels.clear()
+                    val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
                     for(ind_i <- y until y + height.toInt)
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
                           p.op_sequence += new MethodInfo(p.:- , (r, g, b))
-                          val cp = p.clone()
-                          ri.changed_pixels += p
+                          rect_changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                         }
                       }
+                    ri.changed_pixels(cnt) = rect_changed_pixels
                   }
                 })
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     mul.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
+        val r = java.lang.Double.parseDouble(r_text.getValue + "")
+        val g = java.lang.Double.parseDouble(g_text.getValue + "")
+        val b = java.lang.Double.parseDouble(b_text.getValue + "")
+
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
@@ -216,31 +224,34 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                     else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                     else nr.getHeight
 
-                    ri.changed_pixels.clear()
+                    val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
                     for(ind_i <- y until y + height.toInt)
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
                           p.op_sequence += new MethodInfo(p.* , (r, g, b))
-                          val cp = p.clone()
-                          ri.changed_pixels += p
+                          rect_changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                         }
                       }
+                    ri.changed_pixels(cnt) = rect_changed_pixels
                   }
                 })
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     div.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
+        val r = java.lang.Double.parseDouble(r_text.getValue + "")
+        val g = java.lang.Double.parseDouble(g_text.getValue + "")
+        val b = java.lang.Double.parseDouble(b_text.getValue + "")
+
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
@@ -265,31 +276,34 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                     else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                     else nr.getHeight
 
-                    ri.changed_pixels.clear()
+                    val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
                     for(ind_i <- y until y + height.toInt)
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
                           p.op_sequence += new MethodInfo(p./ , (r, g, b))
-                          val cp = p.clone()
-                          ri.changed_pixels += p
+                          rect_changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                         }
                       }
+                    ri.changed_pixels(cnt) = rect_changed_pixels
                   }
                 })
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     inv_div.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
+        val r = java.lang.Double.parseDouble(r_text.getValue + "")
+        val g = java.lang.Double.parseDouble(g_text.getValue + "")
+        val b = java.lang.Double.parseDouble(b_text.getValue + "")
+
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
@@ -314,31 +328,34 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                     else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                     else nr.getHeight
 
-                    ri.changed_pixels.clear()
+                    val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
                     for(ind_i <- y until y + height.toInt)
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
                           p.op_sequence += new MethodInfo(p.:/ , (r, g, b))
-                          val cp = p.clone()
-                          ri.changed_pixels += p
+                          rect_changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                         }
                       }
+                    ri.changed_pixels(cnt) = rect_changed_pixels
                   }
                 })
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     power.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
+        val r = java.lang.Double.parseDouble(r_text.getValue + "")
+        val g = java.lang.Double.parseDouble(g_text.getValue + "")
+        val b = java.lang.Double.parseDouble(b_text.getValue + "")
+
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
@@ -363,31 +380,34 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                     else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                     else nr.getHeight
 
-                    ri.changed_pixels.clear()
+                    val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
                     for(ind_i <- y until y + height.toInt)
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
                           p.op_sequence += new MethodInfo(p.power , (r, g, b))
-                          val cp = p.clone()
-                          ri.changed_pixels += p
+                          rect_changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                         }
                       }
+                    ri.changed_pixels(cnt) = rect_changed_pixels
                   }
                 })
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     log.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
+        val r = java.lang.Double.parseDouble(r_text.getValue + "")
+        val g = java.lang.Double.parseDouble(g_text.getValue + "")
+        val b = java.lang.Double.parseDouble(b_text.getValue + "")
+
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
@@ -412,31 +432,34 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                     else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                     else nr.getHeight
 
-                    ri.changed_pixels.clear()
+                    val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
                     for(ind_i <- y until y + height.toInt)
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
                           p.op_sequence += new MethodInfo(p.log , (r, g, b))
-                          val cp = p.clone()
-                          ri.changed_pixels += p
+                          rect_changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                         }
                       }
+                    ri.changed_pixels(cnt) = rect_changed_pixels
                   }
                 })
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     abs.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
+        val r = java.lang.Double.parseDouble(r_text.getValue + "")
+        val g = java.lang.Double.parseDouble(g_text.getValue + "")
+        val b = java.lang.Double.parseDouble(b_text.getValue + "")
+
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
@@ -461,31 +484,34 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                     else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                     else nr.getHeight
 
-                    ri.changed_pixels.clear()
+                    val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
                     for(ind_i <- y until y + height.toInt)
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
                           p.op_sequence += new MethodInfo(p.abs , (r, g, b))
-                          val cp = p.clone()
-                          ri.changed_pixels += p
+                          rect_changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                         }
                       }
+                    ri.changed_pixels(cnt) = rect_changed_pixels
                   }
                 })
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     min.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
+        val r = java.lang.Double.parseDouble(r_text.getValue + "")
+        val g = java.lang.Double.parseDouble(g_text.getValue + "")
+        val b = java.lang.Double.parseDouble(b_text.getValue + "")
+
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
@@ -510,31 +536,34 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                     else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                     else nr.getHeight
 
-                    ri.changed_pixels.clear()
+                    val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
                     for(ind_i <- y until y + height.toInt)
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
                           p.op_sequence += new MethodInfo(p.min , (r, g, b))
-                          val cp = p.clone()
-                          ri.changed_pixels += p
+                          rect_changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                         }
                       }
+                    ri.changed_pixels(cnt) = rect_changed_pixels
                   }
                 })
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     max.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val r = java.lang.Double.parseDouble(r_text.getText)
-        val g = java.lang.Double.parseDouble(g_text.getText)
-        val b = java.lang.Double.parseDouble(b_text.getText)
+        val r = java.lang.Double.parseDouble(r_text.getValue + "")
+        val g = java.lang.Double.parseDouble(g_text.getValue + "")
+        val b = java.lang.Double.parseDouble(b_text.getValue + "")
+
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
             if (selections == null) {
@@ -559,22 +588,23 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
                     else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
                     else nr.getHeight
 
-                    ri.changed_pixels.clear()
+                    val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
                     for(ind_i <- y until y + height.toInt)
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
                           p.op_sequence += new MethodInfo(p.max , (r, g, b))
-                          val cp = p.clone()
-                          ri.changed_pixels += p
+                          rect_changed_pixels += p
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                         }
                       }
+                    ri.changed_pixels(cnt) = rect_changed_pixels
                   }
                 })
               })
             }
           }
+          cnt += 1
         })
       }
     })
@@ -608,8 +638,8 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
         selections.foreach(s => {
           s.rectangles.foreach(r => {
-            r.changed_pixels.foreach(p => {
-              p.execute_methods()
+            r.changed_pixels.foreach(cp => {
+              cp.foreach(p => p.execute_methods())
             })
           })
         })
@@ -619,9 +649,15 @@ class PixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, se
 
     this.add(op_panel)
     this.add(rgb_panel)
-    this.add(add_op)
     this.add(finish)
   }
+
+  selections.foreach(s => {
+    s.rectangles.foreach(r => {
+      for (i <- 0 until images.length)
+        r.changed_pixels += new ArrayBuffer[Pixel]()
+    })
+  })
 
   init()
 }

@@ -164,16 +164,16 @@ object Main extends App {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
           if (selectedSelection == null) {
-            image_list.par.foreach(i => {
+            image_list.foreach(i => {
               if (i.active) {
-                i.pixels.par.foreach(p => p.grayscale())
+                i.pixels.foreach(p => p.grayscale())
                 i.update_image()
               }
             })
             test_pane.changed = true
             test_pane.repaint()
           } else {
-            image_list.par.foreach(i => {
+            image_list.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
                 val changed_pixels = new mutable.HashMap[String, Pixel]()
@@ -192,15 +192,17 @@ object Main extends App {
                     else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
                     else r.getHeight
 
+                    val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
                     for(ind_i <- y until y + height.toInt)
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
                           p.grayscale()
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
-                          ri.changed_pixels += p.clone()
+                          rect_changed_pixels += p.clone()
                         }
                       }
+                    ri.changed_pixels += rect_changed_pixels
                   }
                 })
               }
@@ -215,7 +217,7 @@ object Main extends App {
       override def actionPerformed(e: ActionEvent): Unit = {
         try {
           if (selectedSelection == null) {
-            image_list.par.foreach(i => {
+            image_list.foreach(i => {
               if (i.active) {
                 i.pixels.foreach(p => p.negative())
                 i.update_image()
@@ -224,7 +226,7 @@ object Main extends App {
             test_pane.changed = true
             test_pane.repaint()
           } else {
-            image_list.par.foreach(i => {
+            image_list.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
                 val changed_pixels = new mutable.HashMap[String, Pixel]()
@@ -243,15 +245,17 @@ object Main extends App {
                     else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
                     else r.getHeight
 
+                    val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
                     for(ind_i <- y until y + height.toInt)
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
                           p.negative()
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
-                          ri.changed_pixels += p.clone()
+                          rect_changed_pixels += p.clone()
                         }
                       }
+                    ri.changed_pixels += rect_changed_pixels
                   }
                 })
               }
@@ -270,20 +274,20 @@ object Main extends App {
 
         try {
           if (selectedSelection == null) {
-            image_list.par.foreach(i => {
+            image_list.foreach(i => {
               if (i.active) {
-                i.pixels.foreach(p => p.median_filter(i.pixels, N, i.image.getWidth, i.image.getHeight))
+                i.pixels.foreach(p => p.median_filter(i.pixels)(N)(i.image.getWidth)(i.image.getHeight))
                 i.update_image()
               }
             })
             test_pane.changed = true
             test_pane.repaint()
           } else {
-            image_list.par.foreach(i => {
+            image_list.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
                 val changed_pixels = new mutable.HashMap[String, Pixel]()
-                selectedSelection.rectangles.par.foreach(ri => {
+                selectedSelection.rectangles.foreach(ri => {
                   val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
                   if (temp_rect.intersects(r)) {
                     val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
@@ -299,15 +303,17 @@ object Main extends App {
                     else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
                     else r.getHeight
 
+                    val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
                     for(ind_i <- y until y + height.toInt)
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.median_filter(i.pixels, N, i.image.getWidth, i.image.getHeight)
+                          p.median_filter(i.pixels)(N)(i.image.getWidth)(i.image.getHeight)
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
-                          ri.changed_pixels += p.clone()
+                          rect_changed_pixels += p.clone()
                         }
                       }
+                    ri.changed_pixels += rect_changed_pixels
                   }
                 })
               }
@@ -333,20 +339,20 @@ object Main extends App {
 
         try {
           if (selectedSelection == null) {
-            image_list.par.foreach(i => {
+            image_list.foreach(i => {
               if (i.active) {
-                i.pixels.foreach(p => p.weighted_filter(i.pixels, weights, N, i.image.getWidth, i.image.getHeight))
+                i.pixels.foreach(p => p.weighted_filter(i.pixels)(weights)(N)(i.image.getWidth)(i.image.getHeight))
                 i.update_image()
               }
             })
             test_pane.changed = true
             test_pane.repaint()
           } else {
-            image_list.par.foreach(i => {
+            image_list.foreach(i => {
               if (i.active) {
                 val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
                 val changed_pixels = new mutable.HashMap[String, Pixel]()
-                selectedSelection.rectangles.par.foreach(ri => {
+                selectedSelection.rectangles.foreach(ri => {
                   val r = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
                   if (temp_rect.intersects(r)) {
                     val x = if (r.getX <= temp_rect.getX) temp_rect.x else r.x
@@ -362,15 +368,17 @@ object Main extends App {
                     else if (r.getY + r.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - r.getY
                     else r.getHeight
 
+                    val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
                     for(ind_i <- y until y + height.toInt)
                       for(ind_j <- x until x + width.toInt) {
                         val p = i.pixels(ind_i * i.image.getWidth + ind_j)
                         if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.weighted_filter(i.pixels, weights, N, i.image.getWidth, i.image.getHeight)
+                          p.weighted_filter(i.pixels)(weights)(N)(i.image.getWidth)(i.image.getHeight)
                           changed_pixels.addOne(p.x + "-" + p.y, p.clone())
-                          ri.changed_pixels += p.clone()
+                          rect_changed_pixels += p.clone()
                         }
                       }
+                    ri.changed_pixels += rect_changed_pixels
                   }
                 })
               }
@@ -435,7 +443,7 @@ object Main extends App {
           test_pane.changed = true
           test_pane.repaint()
         } catch {
-          case e: Exception => println("Error while applying calculator.")
+          case e: Exception => println("Error while applying revert.")
         }
       }
     })
@@ -584,18 +592,20 @@ object Main extends App {
                 selection_list = selection_list.filter(_.name != selectedValue.name)
                 selection_listbox.setListData(selection_list.map(_.name).toArray)
                 selection_listbox.repaint()
+                var cnt = 0
                 image_list.foreach(i => {
                   i.pixels = i.orig_pixels.clone()
                   selection_list.foreach(s => {
                     if (s.active) {
                       s.rectangles.foreach(r => {
-                        r.changed_pixels.foreach(p => {
+                        r.changed_pixels(cnt).foreach(p => {
                           i.pixels(p.y * i.image.getWidth + p.x) = p.clone()
                         })
                       })
                     }
                   })
                   i.update_image()
+                  cnt += 1
                 })
                 test_pane.changed = true
                 test_pane.repaint()
@@ -607,8 +617,9 @@ object Main extends App {
 
           change_status.addActionListener(new ActionListener() {
             def actionPerformed(e: ActionEvent): Unit = {
-              try {
+              //try {
                 selectedValue.active = !selectedValue.active
+                var cnt = 0
                 image_list.foreach(i => {
                   i.pixels.clear()
                   i.orig_pixels.foreach(op => {
@@ -617,20 +628,22 @@ object Main extends App {
                   selection_list.foreach(s => {
                     if (s.active) {
                       s.rectangles.foreach(r => {
-                        r.changed_pixels.foreach(p => {
-                          i.pixels(p.y * i.image.getWidth + p.x) = p.clone()
+                        r.changed_pixels(cnt).foreach(p => {
+                          if (p.y < i.image.getHeight && p.x < i.image.getWidth)
+                            i.pixels(p.y * i.image.getWidth + p.x) = p.clone()
                         })
                       })
                     }
                   })
                   i.update_image()
+                  cnt += 1
                 })
 
                 test_pane.changed = true
                 test_pane.repaint()
-              } catch {
+              /*} catch {
                 case e: Exception => println("Error while changing selection status.")
-              }
+              }*/
             }
           })
 

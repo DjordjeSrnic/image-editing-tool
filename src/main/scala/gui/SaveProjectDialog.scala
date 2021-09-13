@@ -66,7 +66,7 @@ class SaveProjectDialog(owner: JFrame, images: ListBuffer[ImageInfo], selections
             bw.write(line)
             bw.newLine()
             r.changed_pixels.foreach(p => {
-              bw.write("pixel/" + p.x + "-" + p.y + "-" + p.R + "-" + p.G + "-" + p.B + "-" + p.A)
+              //bw.write("pixel/" + p.x + "-" + p.y + "-" + p.R + "-" + p.G + "-" + p.B + "-" + p.A)
               bw.newLine()
             })
             bw.write("pixel-end")

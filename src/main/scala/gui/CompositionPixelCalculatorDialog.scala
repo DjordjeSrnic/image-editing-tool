@@ -4,14 +4,14 @@ import misc.{ImageInfo, MethodInfo, Pixel, PixelWrapper, SelectionInfo}
 
 import java.awt.{GridLayout, Rectangle}
 import java.awt.event.{ActionEvent, ActionListener}
-import javax.swing.{JButton, JDialog, JFrame, JPanel, JTextField}
+import javax.swing.{JButton, JDialog, JFrame, JPanel, JSpinner, JTextField, SpinnerNumberModel}
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 class CompositionPixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, selections: ListBuffer[SelectionInfo] = null) extends JDialog(owner, true) {
 
   private def init(): Unit = {
-    setTitle("Composition Calculator")
+    /*setTitle("Composition Calculator")
     setAlwaysOnTop(true)
     setVisible(false)
     setBounds(500, 400, 800, 300)
@@ -31,11 +31,10 @@ class CompositionPixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner:
     val max = new JButton("max")
 
     val rgb_panel = new JPanel(new GridLayout(1, 4))
-    val r_text = new JTextField("0.0")
-    val g_text = new JTextField("0.0")
-    val b_text = new JTextField("0.0")
+    val r_text = new JSpinner(new SpinnerNumberModel(0.0, 0.0, 1.0, 0.1))
+    val g_text = new JSpinner(new SpinnerNumberModel(0.0, 0.0, 1.0, 0.1))
+    val b_text = new JSpinner(new SpinnerNumberModel(0.0, 0.0, 1.0, 0.1))
 
-    val add_op = new JButton("Add Operation")
     val finish = new JButton("Finish")
 
     add.addActionListener(new ActionListener {
@@ -562,9 +561,9 @@ class CompositionPixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner:
 
     finish.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        val R = java.lang.Double.parseDouble(r_text.getText)
-        val G = java.lang.Double.parseDouble(g_text.getText)
-        val B = java.lang.Double.parseDouble(b_text.getText)
+        val R = java.lang.Double.parseDouble(r_text.getValue + "")
+        val G = java.lang.Double.parseDouble(g_text.getValue + "")
+        val B = java.lang.Double.parseDouble(b_text.getValue + "")
 
         if (selections == null) {
           images.foreach(i => {
@@ -590,8 +589,7 @@ class CompositionPixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner:
 
     this.add(op_panel)
     this.add(rgb_panel)
-    this.add(add_op)
-    this.add(finish)
+    this.add(finish)*/
   }
 
   init()

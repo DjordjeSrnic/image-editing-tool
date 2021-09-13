@@ -63,7 +63,6 @@ class PixelWrapper(val pixel: Pixel) {
   }
 
   def composite(const: (Double, Double, Double)) = {
-    println("SIZE: " + comp_sequence.length)
     comp_sequence.foldLeft(const) {
       (args, op) => {
         op(args)
