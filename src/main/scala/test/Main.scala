@@ -67,6 +67,29 @@ object Main extends App {
           selection_listbox.setListData(selection_list.map(_.name).toArray)
           image_listbox.setListData(listData.toArray)
           image_listbox.repaint()
+
+          var cnt = 0
+          image_list.foreach(i => {
+            i.pixels.clear()
+            i.orig_pixels.foreach(op => {
+              i.pixels += op.clone()
+            })
+
+            selection_list.foreach(s => {
+              if (s.active) {
+                s.rectangles.foreach(r => {
+                  r.changed_pixels(cnt).foreach(p => {
+                    if (p.y < i.image.getHeight && p.x < i.image.getWidth)
+                      i.pixels(p.y * i.image.getWidth + p.x) = p.clone()
+                  })
+                })
+              }
+            })
+
+            i.update_image()
+            cnt += 1
+          })
+
           test_pane.update_list(image_list)
           test_pane.changed = true
           test_pane.repaint()
@@ -398,7 +421,7 @@ object Main extends App {
             test_pane.changed = true
             test_pane.repaint()
           } else {
-            val calculator_dialog: PixelCalculatorDialog = new PixelCalculatorDialog(image_list, frame, selection_list)
+            val calculator_dialog: PixelCalculatorDialog = new PixelCalculatorDialog(image_list, frame, selectedSelection)
             calculator_dialog.setVisible(true)
           }
         } catch {
@@ -415,7 +438,7 @@ object Main extends App {
             test_pane.changed = true
             test_pane.repaint()
           } else {
-            val calculator_dialog: CompositionPixelCalculatorDialog = new CompositionPixelCalculatorDialog(image_list, frame, selection_list)
+            val calculator_dialog: CompositionPixelCalculatorDialog = new CompositionPixelCalculatorDialog(image_list, frame, selectedSelection)
             calculator_dialog.setVisible(true)
           }
         } catch {
@@ -617,7 +640,7 @@ object Main extends App {
 
           change_status.addActionListener(new ActionListener() {
             def actionPerformed(e: ActionEvent): Unit = {
-              //try {
+              try {
                 selectedValue.active = !selectedValue.active
                 var cnt = 0
                 image_list.foreach(i => {
@@ -641,9 +664,9 @@ object Main extends App {
 
                 test_pane.changed = true
                 test_pane.repaint()
-              /*} catch {
+              } catch {
                 case e: Exception => println("Error while changing selection status.")
-              }*/
+              }
             }
           })
 

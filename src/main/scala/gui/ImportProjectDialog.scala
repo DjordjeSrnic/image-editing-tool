@@ -7,7 +7,8 @@ import java.awt.event._
 import java.io.{BufferedReader, File, FileReader}
 import javax.imageio.ImageIO
 import javax.swing._
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 class ImportProjectDialog(owner: JFrame) extends JDialog(owner, true) {
 
@@ -48,7 +49,8 @@ class ImportProjectDialog(owner: JFrame) extends JDialog(owner, true) {
         var curLine: String = null
         var curSelection: SelectionInfo = null
         var curRectangle: RectangleInfo = null
-        val cur_rectangle_list: ListBuffer[RectangleInfo] = new ListBuffer()
+        var cur_rectangle_list: ListBuffer[RectangleInfo] = new ListBuffer()
+        var cur_group: ArrayBuffer[Pixel] = new ArrayBuffer()
         var cur_selection_name = ""
         var cur_selection_active = false
         curLine = br.readLine()
@@ -70,9 +72,6 @@ class ImportProjectDialog(owner: JFrame) extends JDialog(owner, true) {
           }
 
           if (curLine.split("/")(0) == "selection") {
-            if (cur_selection_name != "") {
-              selection_list += curSelection
-            }
             cur_selection_name = curLine.split("/")(1)
             cur_selection_active = curLine.split("/")(2).toBooleanOption.getOrElse(false)
           }
@@ -86,6 +85,10 @@ class ImportProjectDialog(owner: JFrame) extends JDialog(owner, true) {
             curRectangle = new RectangleInfo(orig_x, orig_y, dest_x, dest_y)
           }
 
+          if (curLine == "image/") {
+            cur_group = new ArrayBuffer[Pixel]()
+          }
+
           if (curLine.split("/")(0) == "pixel") {
             val rect_str = curLine.split("/")(1).split("-")
             val x = rect_str(0).toInt
@@ -94,16 +97,21 @@ class ImportProjectDialog(owner: JFrame) extends JDialog(owner, true) {
             val G = rect_str(3).toDouble
             val B = rect_str(4).toDouble
             val A = rect_str(5).toDouble
-            //curRectangle.changed_pixels += new Pixel(x, y, R, G, B, A)
+            cur_group += new Pixel(x, y, R, G, B, A)
           }
 
           if (curLine == "pixel-end") {
+            curRectangle.changed_pixels += cur_group
+          }
+
+          if (curLine == "image-end") {
             cur_rectangle_list += curRectangle
           }
 
           if (curLine == "rectangle-end") {
             curSelection = new SelectionInfo(cur_selection_name, null, cur_rectangle_list, cur_selection_active, false)
             selection_list += curSelection
+            cur_rectangle_list = new ListBuffer[RectangleInfo]()
           }
 
           curLine = br.readLine()

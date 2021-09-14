@@ -53,9 +53,9 @@ class SaveProjectDialog(owner: JFrame, images: ListBuffer[ImageInfo], selections
           bw.write(new_rgb.toList.mkString(","))
           bw.newLine()
           bw.write(orig_rgb.toList.mkString(","))
+          bw.newLine()
         })
 
-        bw.newLine()
         bw.write("------------------------Selections------------------------")
         bw.newLine()
         selections.foreach(s => {
@@ -65,11 +65,17 @@ class SaveProjectDialog(owner: JFrame, images: ListBuffer[ImageInfo], selections
             val line = "rectangle/" + r.orig_x + "-" + r.orig_y + "-" + r.dest_x + "-" + r.dest_y
             bw.write(line)
             bw.newLine()
-            r.changed_pixels.foreach(p => {
-              //bw.write("pixel/" + p.x + "-" + p.y + "-" + p.R + "-" + p.G + "-" + p.B + "-" + p.A)
+            r.changed_pixels.foreach(cp => {
+              bw.write("image/")
+              bw.newLine()
+              cp.foreach(p => {
+                bw.write("pixel/" + p.x + "-" + p.y + "-" + p.R + "-" + p.G + "-" + p.B + "-" + p.A)
+                bw.newLine()
+              })
+              bw.write("pixel-end")
               bw.newLine()
             })
-            bw.write("pixel-end")
+            bw.write("image-end")
             bw.newLine()
           })
           bw.write("rectangle-end")

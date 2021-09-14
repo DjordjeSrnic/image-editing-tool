@@ -6,12 +6,12 @@ import java.awt.{GridLayout, Rectangle}
 import java.awt.event.{ActionEvent, ActionListener}
 import javax.swing.{JButton, JDialog, JFrame, JPanel, JSpinner, JTextField, SpinnerNumberModel}
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
-class CompositionPixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, selections: ListBuffer[SelectionInfo] = null) extends JDialog(owner, true) {
+class CompositionPixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner: JFrame, selection: SelectionInfo = null) extends JDialog(owner, true) {
 
   private def init(): Unit = {
-    /*setTitle("Composition Calculator")
+    setTitle("Composition Calculator")
     setAlwaysOnTop(true)
     setVisible(false)
     setBounds(500, 400, 800, 300)
@@ -39,506 +39,507 @@ class CompositionPixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner:
 
     add.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
-            if (selections == null) {
+            if (selection == null) {
               i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.+)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
-              selections.foreach(s => {
-                s.rectangles.foreach(ri => {
-                  val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
-                  if (temp_rect.intersects(nr)) {
-                    val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
+              selection.rectangles.foreach(ri => {
+                val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
+                if (temp_rect.intersects(nr)) {
+                  val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
 
-                    val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
+                  val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
 
 
-                    val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
-                    else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
-                    else nr.getWidth
+                  val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
+                  else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
+                  else nr.getWidth
 
-                    val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
-                    else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
-                    else nr.getHeight
+                  val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
+                  else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
+                  else nr.getHeight
 
-                    ri.changed_pixels.clear()
-                    for(ind_i <- y until y + height.toInt)
-                      for(ind_j <- x until x + width.toInt) {
-                        val p = i.pixels(ind_i * i.image.getWidth + ind_j)
-                        if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.wrapper.comp_sequence += p.wrapper.+
-                          val cp = p.clone()
-                          ri.changed_pixels += p
-                          changed_pixels.addOne(p.x + "-" + p.y, p.clone())
-                        }
+                  val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
+                  for(ind_i <- y until y + height.toInt)
+                    for(ind_j <- x until x + width.toInt) {
+                      val p = i.pixels(ind_i * i.image.getWidth + ind_j)
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.wrapper.comp_sequence += p.wrapper.+
+                        rect_changed_pixels += p
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                       }
-                  }
-                })
+                    }
+                  ri.changed_pixels(cnt) = rect_changed_pixels
+                }
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     sub.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
-            if (selections == null) {
+            if (selection == null) {
               i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.-)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
-              selections.foreach(s => {
-                s.rectangles.foreach(ri => {
-                  val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
-                  if (temp_rect.intersects(nr)) {
-                    val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
+              selection.rectangles.foreach(ri => {
+                val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
+                if (temp_rect.intersects(nr)) {
+                  val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
 
-                    val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
+                  val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
 
 
-                    val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
-                    else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
-                    else nr.getWidth
+                  val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
+                  else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
+                  else nr.getWidth
 
-                    val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
-                    else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
-                    else nr.getHeight
+                  val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
+                  else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
+                  else nr.getHeight
 
-                    ri.changed_pixels.clear()
-                    for(ind_i <- y until y + height.toInt)
-                      for(ind_j <- x until x + width.toInt) {
-                        val p = i.pixels(ind_i * i.image.getWidth + ind_j)
-                        if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.wrapper.comp_sequence += p.wrapper.-
-                          val cp = p.clone()
-                          ri.changed_pixels += p
-                          changed_pixels.addOne(p.x + "-" + p.y, p.clone())
-                        }
+                  val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
+                  for(ind_i <- y until y + height.toInt)
+                    for(ind_j <- x until x + width.toInt) {
+                      val p = i.pixels(ind_i * i.image.getWidth + ind_j)
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.wrapper.comp_sequence += p.wrapper.-
+                        rect_changed_pixels += p
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                       }
-                  }
-                })
+                    }
+                  ri.changed_pixels(cnt) = rect_changed_pixels
+                }
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     inv_sub.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
-            if (selections == null) {
+            if (selection == null) {
               i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.:-)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
-              selections.foreach(s => {
-                s.rectangles.foreach(ri => {
-                  val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
-                  if (temp_rect.intersects(nr)) {
-                    val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
+              selection.rectangles.foreach(ri => {
+                val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
+                if (temp_rect.intersects(nr)) {
+                  val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
 
-                    val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
+                  val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
 
 
-                    val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
-                    else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
-                    else nr.getWidth
+                  val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
+                  else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
+                  else nr.getWidth
 
-                    val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
-                    else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
-                    else nr.getHeight
+                  val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
+                  else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
+                  else nr.getHeight
 
-                    ri.changed_pixels.clear()
-                    for(ind_i <- y until y + height.toInt)
-                      for(ind_j <- x until x + width.toInt) {
-                        val p = i.pixels(ind_i * i.image.getWidth + ind_j)
-                        if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.wrapper.comp_sequence += p.wrapper.:-
-                          val cp = p.clone()
-                          ri.changed_pixels += p
-                          changed_pixels.addOne(p.x + "-" + p.y, p.clone())
-                        }
+                  val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
+                  for(ind_i <- y until y + height.toInt)
+                    for(ind_j <- x until x + width.toInt) {
+                      val p = i.pixels(ind_i * i.image.getWidth + ind_j)
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.wrapper.comp_sequence += p.wrapper.:-
+                        rect_changed_pixels += p
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                       }
-                  }
-                })
+                    }
+                  ri.changed_pixels(cnt) = rect_changed_pixels
+                }
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     mul.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
-            if (selections == null) {
+            if (selection == null) {
               i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.*)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
-              selections.foreach(s => {
-                s.rectangles.foreach(ri => {
-                  val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
-                  if (temp_rect.intersects(nr)) {
-                    val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
+              selection.rectangles.foreach(ri => {
+                val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
+                if (temp_rect.intersects(nr)) {
+                  val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
 
-                    val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
+                  val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
 
 
-                    val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
-                    else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
-                    else nr.getWidth
+                  val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
+                  else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
+                  else nr.getWidth
 
-                    val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
-                    else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
-                    else nr.getHeight
+                  val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
+                  else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
+                  else nr.getHeight
 
-                    ri.changed_pixels.clear()
-                    for(ind_i <- y until y + height.toInt)
-                      for(ind_j <- x until x + width.toInt) {
-                        val p = i.pixels(ind_i * i.image.getWidth + ind_j)
-                        if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.wrapper.comp_sequence += p.wrapper.*
-                          val cp = p.clone()
-                          ri.changed_pixels += p
-                          changed_pixels.addOne(p.x + "-" + p.y, p.clone())
-                        }
+                  val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
+                  for(ind_i <- y until y + height.toInt)
+                    for(ind_j <- x until x + width.toInt) {
+                      val p = i.pixels(ind_i * i.image.getWidth + ind_j)
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.wrapper.comp_sequence += p.wrapper.*
+                        rect_changed_pixels += p
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                       }
-                  }
-                })
+                    }
+                  ri.changed_pixels(cnt) = rect_changed_pixels
+                }
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     div.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
-            if (selections == null) {
+            if (selection == null) {
               i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper./)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
-              selections.foreach(s => {
-                s.rectangles.foreach(ri => {
-                  val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
-                  if (temp_rect.intersects(nr)) {
-                    val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
+              selection.rectangles.foreach(ri => {
+                val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
+                if (temp_rect.intersects(nr)) {
+                  val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
 
-                    val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
+                  val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
 
 
-                    val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
-                    else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
-                    else nr.getWidth
+                  val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
+                  else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
+                  else nr.getWidth
 
-                    val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
-                    else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
-                    else nr.getHeight
+                  val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
+                  else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
+                  else nr.getHeight
 
-                    ri.changed_pixels.clear()
-                    for(ind_i <- y until y + height.toInt)
-                      for(ind_j <- x until x + width.toInt) {
-                        val p = i.pixels(ind_i * i.image.getWidth + ind_j)
-                        if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.wrapper.comp_sequence += p.wrapper./
-                          val cp = p.clone()
-                          ri.changed_pixels += p
-                          changed_pixels.addOne(p.x + "-" + p.y, p.clone())
-                        }
+                  val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
+                  for(ind_i <- y until y + height.toInt)
+                    for(ind_j <- x until x + width.toInt) {
+                      val p = i.pixels(ind_i * i.image.getWidth + ind_j)
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.wrapper.comp_sequence += p.wrapper./
+                        rect_changed_pixels += p
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                       }
-                  }
-                })
+                    }
+                  ri.changed_pixels(cnt) = rect_changed_pixels
+                }
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     inv_div.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
-            if (selections == null) {
+            if (selection == null) {
               i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.:/)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
-              selections.foreach(s => {
-                s.rectangles.foreach(ri => {
-                  val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
-                  if (temp_rect.intersects(nr)) {
-                    val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
+              selection.rectangles.foreach(ri => {
+                val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
+                if (temp_rect.intersects(nr)) {
+                  val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
 
-                    val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
+                  val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
 
 
-                    val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
-                    else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
-                    else nr.getWidth
+                  val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
+                  else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
+                  else nr.getWidth
 
-                    val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
-                    else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
-                    else nr.getHeight
+                  val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
+                  else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
+                  else nr.getHeight
 
-                    ri.changed_pixels.clear()
-                    for(ind_i <- y until y + height.toInt)
-                      for(ind_j <- x until x + width.toInt) {
-                        val p = i.pixels(ind_i * i.image.getWidth + ind_j)
-                        if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.wrapper.comp_sequence += p.wrapper.:/
-                          val cp = p.clone()
-                          ri.changed_pixels += p
-                          changed_pixels.addOne(p.x + "-" + p.y, p.clone())
-                        }
+                  val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
+                  for(ind_i <- y until y + height.toInt)
+                    for(ind_j <- x until x + width.toInt) {
+                      val p = i.pixels(ind_i * i.image.getWidth + ind_j)
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.wrapper.comp_sequence += p.wrapper.:/
+                        val cp = p.clone()
+                        rect_changed_pixels += p
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                       }
-                  }
-                })
+                    }
+                  ri.changed_pixels(cnt) = rect_changed_pixels
+                }
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     power.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
-            if (selections == null) {
+            if (selection == null) {
               i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.power)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
-              selections.foreach(s => {
-                s.rectangles.foreach(ri => {
-                  val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
-                  if (temp_rect.intersects(nr)) {
-                    val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
+              selection.rectangles.foreach(ri => {
+                val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
+                if (temp_rect.intersects(nr)) {
+                  val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
 
-                    val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
+                  val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
 
 
-                    val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
-                    else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
-                    else nr.getWidth
+                  val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
+                  else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
+                  else nr.getWidth
 
-                    val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
-                    else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
-                    else nr.getHeight
+                  val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
+                  else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
+                  else nr.getHeight
 
-                    ri.changed_pixels.clear()
-                    for(ind_i <- y until y + height.toInt)
-                      for(ind_j <- x until x + width.toInt) {
-                        val p = i.pixels(ind_i * i.image.getWidth + ind_j)
-                        if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.wrapper.comp_sequence += p.wrapper.power
-                          val cp = p.clone()
-                          ri.changed_pixels += p
-                          changed_pixels.addOne(p.x + "-" + p.y, p.clone())
-                        }
+                  val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
+                  for(ind_i <- y until y + height.toInt)
+                    for(ind_j <- x until x + width.toInt) {
+                      val p = i.pixels(ind_i * i.image.getWidth + ind_j)
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.wrapper.comp_sequence += p.wrapper.power
+                        rect_changed_pixels += p
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                       }
-                  }
-                })
+                    }
+                  ri.changed_pixels(cnt) = rect_changed_pixels
+                }
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     log.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
-            if (selections == null) {
+            if (selection == null) {
               i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.log)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
-              selections.foreach(s => {
-                s.rectangles.foreach(ri => {
-                  val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
-                  if (temp_rect.intersects(nr)) {
-                    val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
+              selection.rectangles.foreach(ri => {
+                val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
+                if (temp_rect.intersects(nr)) {
+                  val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
 
-                    val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
+                  val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
 
 
-                    val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
-                    else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
-                    else nr.getWidth
+                  val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
+                  else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
+                  else nr.getWidth
 
-                    val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
-                    else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
-                    else nr.getHeight
+                  val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
+                  else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
+                  else nr.getHeight
 
-                    ri.changed_pixels.clear()
-                    for(ind_i <- y until y + height.toInt)
-                      for(ind_j <- x until x + width.toInt) {
-                        val p = i.pixels(ind_i * i.image.getWidth + ind_j)
-                        if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.wrapper.comp_sequence += p.wrapper.log
-                          val cp = p.clone()
-                          ri.changed_pixels += p
-                          changed_pixels.addOne(p.x + "-" + p.y, p.clone())
-                        }
+                  val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
+                  for(ind_i <- y until y + height.toInt)
+                    for(ind_j <- x until x + width.toInt) {
+                      val p = i.pixels(ind_i * i.image.getWidth + ind_j)
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.wrapper.comp_sequence += p.wrapper.log
+                        rect_changed_pixels += p
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                       }
-                  }
-                })
+                    }
+                  ri.changed_pixels(cnt) = rect_changed_pixels
+                }
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     abs.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
-            if (selections == null) {
+            if (selection == null) {
               i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.abs)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
-              selections.foreach(s => {
-                s.rectangles.foreach(ri => {
-                  val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
-                  if (temp_rect.intersects(nr)) {
-                    val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
+              selection.rectangles.foreach(ri => {
+                val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
+                if (temp_rect.intersects(nr)) {
+                  val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
 
-                    val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
+                  val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
 
 
-                    val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
-                    else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
-                    else nr.getWidth
+                  val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
+                  else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
+                  else nr.getWidth
 
-                    val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
-                    else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
-                    else nr.getHeight
+                  val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
+                  else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
+                  else nr.getHeight
 
-                    ri.changed_pixels.clear()
-                    for(ind_i <- y until y + height.toInt)
-                      for(ind_j <- x until x + width.toInt) {
-                        val p = i.pixels(ind_i * i.image.getWidth + ind_j)
-                        if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.wrapper.comp_sequence += p.wrapper.abs
-                          val cp = p.clone()
-                          ri.changed_pixels += p
-                          changed_pixels.addOne(p.x + "-" + p.y, p.clone())
-                        }
+                  val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
+                  for(ind_i <- y until y + height.toInt)
+                    for(ind_j <- x until x + width.toInt) {
+                      val p = i.pixels(ind_i * i.image.getWidth + ind_j)
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.wrapper.comp_sequence += p.wrapper.abs
+                        rect_changed_pixels += p
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                       }
-                  }
-                })
+                    }
+                  ri.changed_pixels(cnt) = rect_changed_pixels
+                }
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     min.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
-            if (selections == null) {
+            if (selection == null) {
               i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.min)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
-              selections.foreach(s => {
-                s.rectangles.foreach(ri => {
-                  val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
-                  if (temp_rect.intersects(nr)) {
-                    val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
+              selection.rectangles.foreach(ri => {
+                val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
+                if (temp_rect.intersects(nr)) {
+                  val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
 
-                    val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
+                  val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
 
 
-                    val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
-                    else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
-                    else nr.getWidth
+                  val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
+                  else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
+                  else nr.getWidth
 
-                    val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
-                    else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
-                    else nr.getHeight
+                  val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
+                  else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
+                  else nr.getHeight
 
-                    ri.changed_pixels.clear()
-                    for(ind_i <- y until y + height.toInt)
-                      for(ind_j <- x until x + width.toInt) {
-                        val p = i.pixels(ind_i * i.image.getWidth + ind_j)
-                        if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.wrapper.comp_sequence += p.wrapper.min
-                          val cp = p.clone()
-                          ri.changed_pixels += p
-                          changed_pixels.addOne(p.x + "-" + p.y, p.clone())
-                        }
+                  val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
+                  for(ind_i <- y until y + height.toInt)
+                    for(ind_j <- x until x + width.toInt) {
+                      val p = i.pixels(ind_i * i.image.getWidth + ind_j)
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.wrapper.comp_sequence += p.wrapper.min
+                        rect_changed_pixels += p
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                       }
-                  }
-                })
+                    }
+                  ri.changed_pixels(cnt) = rect_changed_pixels
+                }
               })
             }
           }
+          cnt += 1
         })
       }
     })
 
     max.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
+        var cnt = 0
         images.foreach(i => {
           if (i.active) {
-            if (selections == null) {
+            if (selection == null) {
               i.pixels.foreach(p => p.wrapper.comp_sequence += p.wrapper.max)
             } else {
               val temp_rect = new Rectangle(0, 0, i.image.getWidth, i.image.getHeight)
               val changed_pixels = new mutable.HashMap[String, Pixel]()
-              selections.foreach(s => {
-                s.rectangles.foreach(ri => {
-                  val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
-                  if (temp_rect.intersects(nr)) {
-                    val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
+              selection.rectangles.foreach(ri => {
+                val nr = new Rectangle(ri.orig_x, ri.orig_y, ri.dest_x - ri.orig_x, ri.dest_y - ri.orig_y)
+                if (temp_rect.intersects(nr)) {
+                  val x = if (nr.getX <= temp_rect.getX) temp_rect.x else nr.x
 
-                    val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
+                  val y = if (nr.getY <= temp_rect.getY) temp_rect.y else nr.y
 
 
-                    val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
-                    else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
-                    else nr.getWidth
+                  val width = if (nr.getX <= temp_rect.getX) nr.getX + nr.getWidth - temp_rect.getX
+                  else if (nr.getX + nr.getWidth >= temp_rect.getX + temp_rect.getWidth) temp_rect.getX + temp_rect.getWidth - nr.getX
+                  else nr.getWidth
 
-                    val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
-                    else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
-                    else nr.getHeight
+                  val height = if (nr.getY <= temp_rect.getY) nr.getY + nr.getHeight - temp_rect.getY
+                  else if (nr.getY + nr.getHeight  >= temp_rect.getY + temp_rect.getHeight) temp_rect.getY + temp_rect.getHeight - nr.getY
+                  else nr.getHeight
 
-                    ri.changed_pixels.clear()
-                    for(ind_i <- y until y + height.toInt)
-                      for(ind_j <- x until x + width.toInt) {
-                        val p = i.pixels(ind_i * i.image.getWidth + ind_j)
-                        if (!changed_pixels.contains(p.x + "-" + p.y)) {
-                          p.wrapper.comp_sequence += p.wrapper.max
-                          val cp = p.clone()
-                          ri.changed_pixels += p
-                          changed_pixels.addOne(p.x + "-" + p.y, p.clone())
-                        }
+                  val rect_changed_pixels: ArrayBuffer[Pixel] = new ArrayBuffer[Pixel]()
+                  for(ind_i <- y until y + height.toInt)
+                    for(ind_j <- x until x + width.toInt) {
+                      val p = i.pixels(ind_i * i.image.getWidth + ind_j)
+                      if (!changed_pixels.contains(p.x + "-" + p.y)) {
+                        p.wrapper.comp_sequence += p.wrapper.max
+                        rect_changed_pixels += p
+                        changed_pixels.addOne(p.x + "-" + p.y, p.clone())
                       }
-                  }
-                })
+                    }
+                  ri.changed_pixels(cnt) = rect_changed_pixels
+                }
               })
             }
           }
+          cnt += 1
         })
       }
     })
@@ -565,7 +566,7 @@ class CompositionPixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner:
         val G = java.lang.Double.parseDouble(g_text.getValue + "")
         val B = java.lang.Double.parseDouble(b_text.getValue + "")
 
-        if (selections == null) {
+        if (selection == null) {
           images.foreach(i => {
             if (i.active) {
               i.pixels.foreach(p => {
@@ -575,11 +576,9 @@ class CompositionPixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner:
             }
           })
         } else {
-          selections.foreach(s => {
-            s.rectangles.foreach(r => {
-              r.changed_pixels.foreach(p => {
-                p.wrapper.composite(R, G, B)
-              })
+          selection.rectangles.foreach(r => {
+            r.changed_pixels.foreach(cp => {
+              cp.foreach(p => p.wrapper.composite(R, G, B))
             })
           })
         }
@@ -589,8 +588,13 @@ class CompositionPixelCalculatorDialog(var images: ListBuffer[ImageInfo], owner:
 
     this.add(op_panel)
     this.add(rgb_panel)
-    this.add(finish)*/
+    this.add(finish)
   }
+
+  selection.rectangles.foreach(r => {
+    for (i <- 0 until images.length)
+      r.changed_pixels += new ArrayBuffer[Pixel]()
+  })
 
   init()
 }
