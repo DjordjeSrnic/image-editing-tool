@@ -8,7 +8,7 @@ class NewProjectDialog(owner: JFrame) extends JDialog(owner, true) {
 
   private val fc: JFileChooser = new JFileChooser()
   var file_path = ""
-  private var file_name = ""
+  var project_name = ""
 
   private def init(): Unit = {
     setTitle("New Project")
@@ -18,7 +18,7 @@ class NewProjectDialog(owner: JFrame) extends JDialog(owner, true) {
     setLayout(new GridLayout(3, 2))
     val select_image = new JButton("Select Image")
     val create_project = new JButton("Finish")
-    val project_name = new JTextField("")
+    val project_name_field = new JTextField("")
     val image_file = new JLabel("")
 
 
@@ -38,13 +38,13 @@ class NewProjectDialog(owner: JFrame) extends JDialog(owner, true) {
 
     create_project.addActionListener(new ActionListener {
       override def actionPerformed(e: ActionEvent): Unit = {
-        var error_dialog: JDialog = new JDialog()
+        val error_dialog: JDialog = new JDialog()
         error_dialog.setTitle("Error")
         error_dialog.setBounds(500, 400, 500, 150)
         error_dialog.setAlwaysOnTop(true)
         error_dialog.setModal(true)
-        file_name = project_name.getText()
-        if (file_name == "") {
+        project_name = project_name_field.getText()
+        if (project_name == "") {
           setAlwaysOnTop(false)
           val error_label = new JLabel("The project name is empty.", SwingConstants.CENTER)
           error_label.setForeground(Color.RED)
@@ -69,7 +69,7 @@ class NewProjectDialog(owner: JFrame) extends JDialog(owner, true) {
     add(new JLabel("File: "))
     add(image_file)
     add(new JLabel("Project Name: "))
-    add(project_name)
+    add(project_name_field)
   }
 
   init()

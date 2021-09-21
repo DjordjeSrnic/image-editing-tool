@@ -42,6 +42,9 @@ class SaveProjectDialog(owner: JFrame, images: ListBuffer[ImageInfo], selections
         val file = new File(project_path.getText)
         val bw = new BufferedWriter(new FileWriter(file))
 
+        bw.write(owner.getTitle.split(" - ")(1))
+        bw.newLine()
+
         bw.write("------------------------Images------------------------")
         bw.newLine()
         images.foreach(i => {

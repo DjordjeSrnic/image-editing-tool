@@ -13,7 +13,7 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 class ImportProjectDialog(owner: JFrame) extends JDialog(owner, true) {
 
   private val fc: JFileChooser = new JFileChooser()
-  private var project_name = ""
+  var project_name = ""
   var selected_file: File = null
   val image_list: ListBuffer[ImageInfo] = new ListBuffer()
   val selection_list: ListBuffer[SelectionInfo] = new ListBuffer()
@@ -53,6 +53,8 @@ class ImportProjectDialog(owner: JFrame) extends JDialog(owner, true) {
         var cur_group: ArrayBuffer[Pixel] = new ArrayBuffer()
         var cur_selection_name = ""
         var cur_selection_active = false
+        project_name = br.readLine()
+
         curLine = br.readLine()
         while (curLine != null ) {
           if (curLine.split("/")(0) == "images") {

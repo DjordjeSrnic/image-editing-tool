@@ -24,6 +24,7 @@ object Main extends App {
   var selection_listbox: JList[String] = new JList(listData.toArray)
   var test_pane: EditingCanvas = new EditingCanvas(image_list)
   var selectedSelection: SelectionInfo = null
+  var projectName: String = ""
 
   var file_path: String = ""
   val fc = new JFileChooser()
@@ -43,6 +44,7 @@ object Main extends App {
         try {
           val dialog: NewProjectDialog = new NewProjectDialog(frame)
           dialog.setVisible(true)
+          projectName = dialog.project_name
           layer_number += 1
           image_list += new ImageInfo(dialog.file_path.split("\\\\").last, ImageIO.read(new File(dialog.file_path)), layer_number-1)
           listData += ("Layer " + (layer_number-1) + ": " + dialog.file_path.split("\\\\").last)
@@ -50,6 +52,7 @@ object Main extends App {
           test_pane.changed = true
           test_pane.repaint()
           image_listbox.repaint()
+          frame.setTitle(frame.getTitle + " - " + projectName)
         } catch {
           case e: Exception => println("Error while creating a new project.")
         }
@@ -67,6 +70,7 @@ object Main extends App {
           selection_listbox.setListData(selection_list.map(_.name).toArray)
           image_listbox.setListData(listData.toArray)
           image_listbox.repaint()
+          projectName = dialog.project_name
 
           var cnt = 0
           image_list.foreach(i => {
@@ -90,6 +94,7 @@ object Main extends App {
             cnt += 1
           })
 
+          frame.setTitle(frame.getTitle + " - " + projectName)
           test_pane.update_list(image_list)
           test_pane.changed = true
           test_pane.repaint()
@@ -651,10 +656,12 @@ object Main extends App {
                   selection_list.foreach(s => {
                     if (s.active) {
                       s.rectangles.foreach(r => {
-                        r.changed_pixels(cnt).foreach(p => {
-                          if (p.y < i.image.getHeight && p.x < i.image.getWidth)
-                            i.pixels(p.y * i.image.getWidth + p.x) = p.clone()
-                        })
+                        if (r.changed_pixels.length - 1 >= cnt) {
+                          r.changed_pixels(cnt).foreach(p => {
+                            if (p.y < i.image.getHeight && p.x < i.image.getWidth)
+                              i.pixels(p.y * i.image.getWidth + p.x) = p.clone()
+                          })
+                        }
                       })
                     }
                   })
